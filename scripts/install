@@ -8,6 +8,8 @@
 # from here are relative
 SCRIPT_DIR=`dirname $(realpath "$0")`
 cd $SCRIPT_DIR
+# go up to root
+cd ..
 
 
 #
@@ -20,8 +22,6 @@ function dev {
     echo ""
     dev_result=0
 
-    # go up to root
-    cd ..
     # install from dev list
     pip install -r requirements/dev.txt
 }
@@ -32,8 +32,6 @@ function prod {
     echo ""
     prod_result=0
 
-    # go up to root
-    cd ..
     # install from dev list
     pip install -r requirements/prod.txt
 }

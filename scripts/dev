@@ -11,48 +11,7 @@ cd $SCRIPT_DIR
 cd ../hoops
 
 export FLASK_ENV=DEVELOPMENT
+# use debugger to autorestart on file change
+export FLASK_DEBUG=1
 
 python -m flask run
-
-# prj_name=hoops
-# 
-# # SET PWD TO DIRNAME OF THIS SCRIPT
-# # this script should always be located next to
-# # docker-compose.yml & the test_runner package
-# # directory (containing python env & tests)
-# current_dir=`dirname "$0"`
-# cd $current_dir
-# # go to root directory
-# cd ..
-# 
-# #
-# # START DEV SERVER
-# #
-# function seve {
-#     python -m $prj_name.$prj_name &
-#     SERVER_PID=$!
-# }
-# 
-# #
-# # START WATCHER
-# #
-# 
-# # Use entr to watch a list of files, get the list by running
-# # rg in a loop, then restart if any file changes or new file
-# # is added to the watched dir
-# # loop is pushed to the background to allow for stack logs
-# # to be pulled to the foreground in the next command
-# while sleep 1; do
-#     rg --files ./$prj_name | entr -d kill $SERVER_PID && serve
-# done &
-# # save while loop's PID to be able to kill it later
-# WATCHER_PID=$!
-# 
-# #
-# # STOP SCRIPT
-# #
-# 
-# # kill while loop
-# kill $WATCHER_PID
-# # kill server
-# kill $SERVER_PID
