@@ -11,18 +11,13 @@ from typing import Any
 
 from flask import Flask
 
+from status import status
 from transactions import transactions
 
 app = Flask(__name__)
 
 
-@app.route("/status")
-def status() -> dict[str, Any]:
-    """Check API status at index."""
-    return {
-        "ok": True,
-    }
-
+app.register_blueprint(status)
 
 app.register_blueprint(transactions)
 
