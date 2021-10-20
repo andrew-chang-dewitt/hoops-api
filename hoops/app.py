@@ -7,6 +7,7 @@ Run by either calling `python -m hoops.app` or
 © 2021 Andrew Chang-DeWitt
 Source distributed under an MIT License.
 """
+from dataclasses import dataclass
 from typing import Any
 
 from flask import Flask
@@ -14,13 +15,34 @@ from flask import Flask
 from status import status
 from transactions import transactions
 
-app = Flask(__name__)
+
+@dataclass
+class Config:
+    """
+    Options that can be passed when creating the application.
+
+    Provides sane defaults that can be overridden on creation.
+    """
+
+    # indicate that the application is created for testing only
+    TESTING: bool = False
+    # pass the necessary database info to the application
+    DATABASE: None = None
 
 
-app.register_blueprint(status)
+def create_app(config: Config = Config()) -> Flask:
+    """
+    Application factory.
 
-app.register_blueprint(transactions)
+    Uses default config options unless told otherwise.
+    """
+    app = Flask(__name__)
+
+    app.register_blueprint(status)
+    app.register_blueprint(transactions)
+
+    return app
 
 
 if __name__ == "__main__":
-    app.run()
+    create_app().run()
