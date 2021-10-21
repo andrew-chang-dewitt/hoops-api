@@ -1,1 +1,2 @@
-Flask>=2.0.2,<3.0
+https://github.com/cheese-drawer/lib-python-db-wrapper/releases/download/2.0.2/db_wrapper-2.0.2-py3-none-any.whl
+Flask[async]>=2.0.2,<3.0
