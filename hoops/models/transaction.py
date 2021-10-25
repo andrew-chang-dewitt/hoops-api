@@ -2,9 +2,10 @@
 
 import datetime
 
+from db_wrapper.client import SyncClient
 from db_wrapper.model import (
     ModelData,
-    Model,
+    SyncModel,
 )
 
 
@@ -17,5 +18,8 @@ class TransactionData(ModelData):
     date: datetime.date
 
 
-class Transaction(Model[TransactionData]):
+class Transaction(SyncModel[TransactionData]):
     """Build an Transaction Model instance."""
+
+    def __init__(self, client: SyncClient) -> None:
+        super().__init__(client, 'transaction')
