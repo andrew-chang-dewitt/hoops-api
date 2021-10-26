@@ -17,7 +17,7 @@ cd ..
 eval "$(direnv export bash)"
 
 #
-# RUN AUTFIXER
+# RUN AUTOFIXER
 #
 
 echo "Applying PEP 8 fixes..."
