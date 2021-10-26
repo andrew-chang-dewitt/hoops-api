@@ -42,7 +42,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && apk del .build-deps
 
 # start server
-WORKDIR /hoops
+# WORKDIR /hoops
 ENTRYPOINT ["python"]
 # tell flask to use 0.0.0.0 instead of localhost to allow 
 # connections from outside docker container
