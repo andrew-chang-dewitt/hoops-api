@@ -8,12 +8,14 @@ Run by either calling `python -m hoops.app` or
 Source distributed under an MIT License.
 """
 from dataclasses import dataclass
-from typing import Any
 
 from flask import Flask
 
-from status import status
-from transactions import transactions
+# database
+from .database import create_client, SyncClient
+# route handlers
+from .status import status
+from .transactions import create_transactions
 
 
 @dataclass
@@ -25,9 +27,8 @@ class Config:
     """
 
     # indicate that the application is created for testing only
-    TESTING: bool = False
-    # pass the necessary database info to the application
-    DATABASE: None = None
+    testing: bool = False
+    database: SyncClient = create_client()
 
 
 def create_app(config: Config = Config()) -> Flask:
@@ -36,13 +37,20 @@ def create_app(config: Config = Config()) -> Flask:
 
     Uses default config options unless told otherwise.
     """
+    #
+    # DATABSE
+    #
+    db_client = config.database
+
+    #
+    # APP SETUP
+    #
+
+    # create app
     app = Flask(__name__)
 
+    # register route handlers
     app.register_blueprint(status)
-    app.register_blueprint(transactions)
+    app.register_blueprint(create_transactions(db_client))
 
     return app
-
-
-if __name__ == "__main__":
-    create_app().run()
