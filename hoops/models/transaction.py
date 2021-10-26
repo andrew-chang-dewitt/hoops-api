@@ -12,10 +12,13 @@ from db_wrapper.model import (
 class TransactionData(ModelData):
     """An example Item."""
 
+    # Essentially a dataclass, has no methods
+    # pylint: disable=too-few-public-methods
+
     amount: float
     description: str
     payee: str
-    date: datetime.date
+    timestamp: datetime.datetime
 
 
 class Transaction(SyncModel[TransactionData]):
