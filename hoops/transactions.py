@@ -51,11 +51,6 @@ def create_transactions(database: SyncClient) -> Blueprint:
         if body is None:
             return jsonify("Request body must not be empty.")
 
-        new_transaction = Data(**{
-            **body,
-            "id": uuid4()
-        })
-
         result: Data = model.create.one(new_transaction)
 
         return jsonify(OkResponse(result))
