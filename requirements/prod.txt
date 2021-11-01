@@ -1,2 +1,2 @@
-https://github.com/cheese-drawer/lib-python-db-wrapper/releases/download/2.1.1/db_wrapper-2.1.1-py3-none-any.whl
+https://github.com/cheese-drawer/lib-python-db-wrapper/releases/download/2.3.0/db_wrapper-2.3.0-py3-none-any.whl
 Flask>=2.0.2,<3.0
