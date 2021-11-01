@@ -1,6 +1,7 @@
 """A Model for Transaction data types."""
 
 import datetime
+from decimal import Decimal
 from typing import List, Optional
 
 from db_wrapper.client import SyncClient
@@ -19,7 +20,7 @@ class TransactionData(ModelData):
     # Essentially a dataclass, has no methods
     # pylint: disable=too-few-public-methods
 
-    amount: float
+    amount: Decimal
     description: str
     payee: str
     timestamp: datetime.datetime
