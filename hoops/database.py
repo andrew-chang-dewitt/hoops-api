@@ -1,6 +1,10 @@
 import os
 
 from db_wrapper import ConnectionParameters, SyncClient
+# importing just to re-export
+from db_wrapper.model.base import (  # pylint: disable=unused-import
+    NoResultFound
+)
 
 
 def create_client() -> SyncClient:
