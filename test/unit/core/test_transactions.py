@@ -2,7 +2,6 @@
 
 # testing dependencies
 import unittest
-from unittest.mock import Mock
 from uuid import uuid1, UUID
 
 # internal dependencies
