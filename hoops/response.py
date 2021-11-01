@@ -7,9 +7,10 @@ from typing import (
     Any,
     Dict,
     Generic,
-    Hashable,
     Literal,
+    List,
     Optional,
+    Protocol,
     TypeVar,
     Union
 )
@@ -45,7 +46,7 @@ class ErrObject:
                          traceback=traceback)
 
 
-Data = TypeVar('Data', bound=Union[Dict[Hashable, Any], ErrObject])
+Data = TypeVar('Data', bound=Union[Dict[Any, Any], ErrObject])
 
 
 @dataclass
@@ -55,15 +56,36 @@ class ResponseABC(Generic[Data]):
     success: bool
 
 
+class Dictable(Protocol):
+    """Interface declaring that an object is able to be converted to a Dict."""
+
+    def dict(self) -> Dict[str, Any]:
+        """Return a Dict made from this object."""
+        ...
+
+
+OkBody = Union[Union[str, Dict[Any, Any], Dictable],
+               List[Union[str, Dict[Any, Any], Dictable]]]
+
+
 @dataclass
 class OkResponse(ResponseABC[Data]):
     """Encapsulate a successful response."""
 
-    body: Dict[Hashable, Any]
+    body: OkBody
 
-    def __init__(self, body: Dict[Hashable, Any]):
+    def __init__(self, body: OkBody):
         super().__init__(success=True)
-        self.body = body
+
+        if isinstance(body, (str, dict)):
+            self.body = body
+        elif isinstance(body, list):
+            self.body = [item
+                         if isinstance(item, (str, dict))
+                         else item.dict()
+                         for item in body]
+        else:
+            self.body = body.dict()
 
 
 @dataclass
