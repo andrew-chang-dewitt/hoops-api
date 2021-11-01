@@ -1,7 +1,6 @@
 """Blueprint for /transaction routes."""
 
-from typing import Any, Dict, Optional
-from uuid import uuid4
+from typing import Any, Dict, List, Optional
 
 from flask import (
     # current_app,
@@ -13,6 +12,11 @@ from flask import (
 
 from db_wrapper.client import SyncClient
 
+from hoops.core.transactions import (
+    create_one,
+    read_one,
+    read_many,
+)
 from .response import OkResponse
 from .models.transaction import (
     Transaction as Model,
@@ -51,14 +55,24 @@ def create_transactions(database: SyncClient) -> Blueprint:
         if body is None:
             return jsonify("Request body must not be empty.")
 
-        result: Data = model.create.one(new_transaction)
+        valid_data, db_method = create_one(body, model)
+        result: Data = db_method(valid_data)
 
         return jsonify(OkResponse(result))
 
     @transactions.route("/one/<tran_id>", methods=["GET"])
     def one(tran_id: str) -> Response:
         """Get a specific Transaction by a given id."""
-        result: Data = model.read.one_by_id(tran_id)
+        valid_data, db_method = read_one(tran_id, model)
+        result: Data = db_method(valid_data)
+
+        return jsonify(OkResponse(result))
+
+    @transactions.route("/many/<limit>", methods=["GET"])
+    def many(limit: str) -> Response:
+        """Get many Transactions."""
+        valid_limit, db_method = read_many(limit, model)
+        result: List[Data] = db_method(valid_limit)
 
         return jsonify(OkResponse(result))
 

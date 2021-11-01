@@ -8,6 +8,7 @@ from typing import (
     Optional,
     Tuple,
     TypeVar,
+    Union,
 )
 from uuid import uuid4, UUID
 
@@ -40,7 +41,7 @@ def create_one(
 def read_one(
     requested_id: str,
     model: Model
-) -> Return[str, UUID, Data]:
+) -> Return[UUID, UUID, Data]:
     """Validate id as UUID & return with database method."""
     tran_id = UUID(requested_id)
 
@@ -48,7 +49,7 @@ def read_one(
 
 
 def read_many(
-    limit: Any,
+    limit: Optional[Union[str, int]],
     model: Model
 ) -> Return[Optional[int], Optional[int], List[Data]]:
     """Validate limit as None or int & return with database method."""
