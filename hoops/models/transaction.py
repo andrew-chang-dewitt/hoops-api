@@ -6,6 +6,7 @@ from typing import List, Optional
 from db_wrapper.client import SyncClient
 from db_wrapper.model import (
     ModelData,
+    RealDictRow,
     SyncModel,
     SyncRead,
     sql,
@@ -32,14 +33,19 @@ class TransactionReader(SyncRead[TransactionData]):
         query = sql.SQL(
             'SELECT * '
             'FROM {table} '
-            'ORDER BY timestamp'
+            'ORDER BY timestamp '
             'LIMIT {limit}'
         ).format(
             table=self._table,
-            limit=limit,
+            limit=sql.Literal(limit),
         )
 
-        return self._client.execute_and_return(query)
+        query_result: List[RealDictRow] = \
+            self._client.execute_and_return(query)
+        result = [self._return_constructor(**row)
+                  for row in query_result]
+
+        return result
 
 
 class Transaction(SyncModel[TransactionData]):
@@ -50,5 +56,5 @@ class Transaction(SyncModel[TransactionData]):
     def __init__(self, client: SyncClient) -> None:
         table = 'transaction'
 
-        super().__init__(client, table)
-        self.read = TransactionReader(client, table)
+        super().__init__(client, table, TransactionData)
+        self.read = TransactionReader(client, self.table, TransactionData)
