@@ -8,12 +8,12 @@ Final Project Proposal
 Project Summary
 ---
 
-- *[ ] Proposed project title:*
+- *[x] Proposed project title:*
 
   Currently developing with the title "Hoops", which is the literal translation of a slang word for money in Taiwan. 
   Not really spending much time on the name yet, but I expect this to change eventually.
 
-- *[ ] Longer description of project:*
+- *[x] Longer description of project:*
 
   A back-end REST API serving JSON data for a budgeting application.
   The goal is to build something similar to the budgeting tools offered by a fintech I used to use before it was killed off in a merger.
@@ -142,17 +142,8 @@ The following Entity Relationship Diagram represents the database design:
 UI Design
 ---
 
-I'm not sure I actually plan to do a UI yet. 
-The current phase is simply about building an application to store & make available the data, which can then be consumed by a separate front-end application (e.g. web app or mobile app).
-
-...
-
-*If your program has a GUI component, create a diagram for each page of the design. It doesn't need to be elaborate or beautiful, but it should give you enough information to make the programming easy:*
-
-- [ ] *Name and type of each element on the page*
-- [ ] *Layout hints if needed (row and column numbers for grid layout)*
-- [ ] *Design - layout instructions (fonts, colors, borders, etc)*
-- [ ] *Function for any buttons, menu items, or interactive elements*
+This app is the back-end REST API serving JSON only, with the User being a Client consuming the API over HTTPS.
+This means the UI is a series of API endpoints used to achieve the stories written above in the [Use Case Analysis](#use-case-analysis) section.
 
 Algorithm
 ---
