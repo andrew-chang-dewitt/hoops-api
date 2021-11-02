@@ -29,6 +29,47 @@ Project Summary
 
 ### Use Case Analysis
 
+I'm not sure yet what these actions look like in UI, but I've done the following Use Case Analysis as "User stories":
+
+1. A User can create an Account
+2. A User can add a Transaction to an Account
+3. A User can view all their Transactions for a given Account
+4. A User can view all their Transactions for all Accounts
+5. A User can view a list of all of their Accounts
+6. A User can edit the name of an Account
+7. A User can mark an Account as closed
+8. A User can edit the payee, description, & amount of a Transaction
+9. A User can move a Transaction from one Account to another
+10. A User can delete a Transaction
+11. A User can create an Envelope
+12. A User can move money from their "available funds" to an Envelope
+13. A User can move funds from an Envelope back to "available"
+14. A User can view the history of funds moving in & out of an Envelope
+15. A User can change the name of an Envelope
+16. A User can add/change/remove a description for an Envelope
+17. A User can mark an Envelope as closed
+18. A User can mark a Transaction as "spent from" a given Envelope, if there are enough funds available in the Envelope \
+  *Note: If a Transaction is not "spent from" any Envelope, then it is deducted from the "available funds" balance.*
+19. A User can view how much funds are "available" (i.e. portion of total Balance not reserved in an Envelope)
+20. A User can view their current, total Balance across all accounts (including funds reserved in an Envelope)
+21. A User can login
+22. A User can register
+23. A User can update their username
+24. A User can update their password
+25. A User can delete their data
+26. A User can create a Shared User
+27. A User can invite another User to join a Shared User
+28. A User can change profiles to manage the Accounts, Transactions, & Envelopes (i.e. do stories 1 through 20) of their Shared User (if they have one)
+29. A User can leave a Shared User
+30. A User can vote to delete the data of a Shared User (if all agree, then it will be deleted)
+
+Stretch goals:
+
+1. A User can import Transactions from a csv
+2. A User can sign up for new Transactions to be auto-imported from participating bank accounts (using Plaid)
+3. A User can set a goal date for an Envelope
+4. A User can 
+
 Data Design
 ---
 
