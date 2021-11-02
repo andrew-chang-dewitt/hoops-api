@@ -12,16 +12,16 @@ Project Summary
 
 - *[ ] Longer description of project:*
 
-- *[ ] Intended user:*
+- *[x] Intended user:*
   
   My wife & I first, then eventually maybe either an OSS release for self-hosting or a SAAS hosted option.
   
-- *[ ] What problem is project trying to solve?:*
+- *[x] What problem is project trying to solve?:*
 
   Planning spending in a flexible, extensible, & low-friction fashion while being usable by multiple people simultaneously. 
   Modeled after my favorite now-defunct fintech's budgeting tools.
 
-- *[ ] Which technologies will you need (files, databases, GUIs?):*
+- *[x] Which technologies will you need (files, databases, GUIs?):*
 
   1. Database (SQLite or PostgreSQL)
   2. Web server (JSON REST API - Bottle or Flask)
@@ -32,7 +32,7 @@ Project Summary
 Data Design
 ---
 
-- *[ ] What data is your program really about?*
+- *[x] What data is your program really about?*
 
   Transactions, Envelopes, & Users. 
   Transactions are exactly what their name says: an amount of money either going in from or coming out to a specific payee at a specific time.
@@ -56,15 +56,15 @@ Data Design
     A Shared User is simply a non-login User, that multiple login Users can act as. 
     This means a login User can have their own Accounts & Envelopes, then they can click a button to manage the Accounts & Envelopes of a Shared User that one or more other people may be able to manage as well.
 
-- *[ ] What is the best way to represent that data? (database, object, arrays)*
+- *[x] What is the best way to represent that data? (database, object, arrays)*
 
   Database
 
-- *[ ] Will the data need to be persistent? How will you make that happen?*
+- *[x] Will the data need to be persistent? How will you make that happen?*
 
   Yes, using a database.
 
-- *[ ] Will the data need to be aggregated into a larger structure? How*
+- *[x] Will the data need to be aggregated into a larger structure? How*
 
   Yes, at times an API response will need to return data from multiple data types (or tables).
   This will be done using JOIN queries & VIEWS.
