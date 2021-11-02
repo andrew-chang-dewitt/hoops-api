@@ -10,8 +10,15 @@ Project Summary
 
 - *[ ] Proposed project title:*
 
+  Currently developing with the title "Hoops", which is the literal translation of a slang word for money in Taiwan. 
+  Not really spending much time on the name yet, but I expect this to change eventually.
+
 - *[ ] Longer description of project:*
 
+  A back-end REST API serving JSON data for a budgeting application.
+  The goal is to build something similar to the budgeting tools offered by a fintech I used to use before it was killed off in a merger.
+  Starting with a simplified version that's based on the envelope system & intended to offer privacy to multiple users while allowing them to share a budget, if desired.
+  
 - *[x] Intended user:*
   
   My wife & I first, then eventually maybe either an OSS release for self-hosting or a SAAS hosted option.
@@ -67,8 +74,23 @@ Stretch goals:
 
 1. A User can import Transactions from a csv
 2. A User can sign up for new Transactions to be auto-imported from participating bank accounts (using Plaid)
-3. A User can set a goal date for an Envelope
-4. A User can automatically schedule money to be moved into an Envelope.
+3. A User can create a subset of an Envelope, called a Goal
+
+  1. A User can set a target date for a Goal (but a Goal doesn't have to have a target date)
+  2. A User can automatically schedule money to be moved into a Goal
+  3. A User can set a priority on an Goal
+  4. A User can move money in and out of being reserved for a Goal
+
+4. A User can create a subset of an Envelope, called an Expense
+
+  1. A User must set a frequency for the Expense to reoccur
+  2. A User can automatically schedule money to be moved into an Expense
+  3. A User can set a priority on an Expense
+  4. A User can see how much is available now from an Expense
+  5. A User can see how much is reserved so far for the next occur date for an Expense
+  6. A User can move money in and out of being reserved for the next occur date for an Expense
+  7. A User can move money in and out of being reserved for the currently available funds on an Expense
+
 
 Data Design
 ---
