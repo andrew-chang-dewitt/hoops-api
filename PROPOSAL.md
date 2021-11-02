@@ -36,7 +36,10 @@ Project Summary
 
 ### Use Case Analysis
 
-I'm not sure yet what these actions look like in UI, but I've done the following Use Case Analysis as "User stories":
+I've written the following Use Case Analysis as "User stories":
+
+> *NOTE:* In this context, a User is defined as a Client consuming the JSON API. 
+> This means the UI of this application is the API itself.
 
 1. A User can create an Account
 2. A User can add a Transaction to an Account
