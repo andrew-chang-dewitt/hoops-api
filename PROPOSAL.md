@@ -73,16 +73,16 @@ I've written the following Use Case Analysis as "User stories":
     24. When a User updates their password, they are given a success message (then their JWT should be revoked & they should be asked to log in again)
     25. When a User deletes their data, confirmation is requested, then if they confirm, they are given a success message
 
-26. When a User creates a Shared User, they are given the new Shared User
+#### Stretch Goals
+
+Eventually, I'd like the application to build the following stories as well:
+
+1. When a User creates a Shared User, they are given the new Shared User
     1. When a User invites another User to join a Shared User, they are given a success message
     28. When a User accepts an invitation to join a Shared User, they are given the Shared User
     28. When a User changes profiles to manage the Accounts, Transactions, & Envelopes (i.e. do stories & sub-stories 1 through 5) of their Shared User (if they have one)
     29. When a User requests to leave a Shared User, they are given the old Shared User id & name
     30. When a User votes to delete the data of a Shared User, they are given a success message (and the other member Users are sent a notification; if all agree, then it will be deleted)
-
-#### Stretch Goals
-
-Eventually, I'd like the application to build the following stories as well:
 
 1. When a User imports Transactions from a csv, the Transactions are added to a given Account & they are given the updated list of Transactions
 2. When a User signs up for new Transactions to be auto-imported from participating bank accounts (using Plaid), Transactions are added to the account as they are received from Plaid & the user is given a success message
@@ -107,7 +107,7 @@ Data Design
 
   Transactions, Envelopes, & Users. 
   Transactions are exactly what their name says: an amount of money either going in from or coming out to a specific payee at a specific time.
-  Envelopes are concept that represents an amount of money reserved for a specific purpose (e.g. a savings goal like a vacation or an expense like rent or groceries).
+  Envelopes are a concept that represents an amount of money reserved for a specific purpose (e.g. a savings goal like a vacation or an expense like rent or groceries).
   A User is also exactly what the name says: a person using this budgeting program.
   
   Besides those three core data types, the following ancillary data types exist:
