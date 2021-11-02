@@ -68,7 +68,7 @@ Stretch goals:
 1. A User can import Transactions from a csv
 2. A User can sign up for new Transactions to be auto-imported from participating bank accounts (using Plaid)
 3. A User can set a goal date for an Envelope
-4. A User can 
+4. A User can automatically schedule money to be moved into an Envelope.
 
 Data Design
 ---
