@@ -21,7 +21,10 @@ Project Summary
   
 - *[x] Intended user:*
   
-  My wife & I first, then eventually maybe either an OSS release for self-hosting or a SAAS hosted option.
+  A User of this project is defined as a client-side web-app that will consume this API over HTTPS. 
+  This means the UI of this application is the API itself.
+  The goal is for this hypothetical web application to be built later to create a GUI that can be used by my wife & I.
+  Then eventually this hypothetical web-app could be expanded as either an OSS release for self-hosting or a SAAS hosted option.
   
 - *[x] What problem is project trying to solve?:*
 
