@@ -82,18 +82,18 @@ Eventually, I'd like the application to build the following stories as well:
 2. When a User signs up for new Transactions to be auto-imported from participating bank accounts (using Plaid), Transactions are added to the account as they are received from Plaid & the user is given a success message
 3. When a User creates a subset of an Envelope, called a Goal, they are given the new Goal
 
-  1. When a User sets a target date for a Goal (but a Goal doesn't have to have a target date), they are given the updated Goal
-  2. When a User requests to automatically schedule money to be moved into a Goal, they are given the updated Goal
-  3. When a User sets the priority on an Goal, they are given the updated Goal
-  4. When a User moves money in and out of being reserved for a Goal, they are given the updated Goal & Balance of the Envelope or Balance the money is moved in or out of
+  - When a User sets a target date for a Goal (but a Goal doesn't have to have a target date), they are given the updated Goal
+  - When a User requests to automatically schedule money to be moved into a Goal, they are given the updated Goal
+  - When a User sets the priority on an Goal, they are given the updated Goal
+  - When a User moves money in and out of being reserved for a Goal, they are given the updated Goal & Balance of the Envelope or Balance the money is moved in or out of
 
 4. When a User creates a subset of an Envelope, called an Expense, they are given the new Expense
 
-  1. A User sets a frequency for the Expense to reoccur, they are given the updated Expense
-  2. When a User requests to automatically schedule money to be moved into an Expense, they are given the updated Expense
-  3. When a User sets a priority on an Expense, they are given the updated Expense
-  4. When a User moves money in and out of being reserved for the next occur date for an Expense, they are given the updated Expense & Balance of the Envelope or Balance the money is moved in or out of
-  5. When a User moves money in and out of being reserved for the currently available funds on an Expense, they are given the updated Expense & Balance of the Envelope or Balance the money is moved in or out of
+  - A User sets a frequency for the Expense to reoccur, they are given the updated Expense
+  - When a User requests to automatically schedule money to be moved into an Expense, they are given the updated Expense
+  - When a User sets a priority on an Expense, they are given the updated Expense
+  - When a User moves money in and out of being reserved for the next occur date for an Expense, they are given the updated Expense & Balance of the Envelope or Balance the money is moved in or out of
+  - When a User moves money in and out of being reserved for the currently available funds on an Expense, they are given the updated Expense & Balance of the Envelope or Balance the money is moved in or out of
 
 
 Data Design
