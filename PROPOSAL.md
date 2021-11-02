@@ -55,7 +55,7 @@ I've written the following Use Case Analysis as "User stories":
     8. When a User edits the payee, description, &/or amount of a Transaction, the Transaction is updated & they are given the updated Transaction
     9. When a User moves a Transaction from one Account to another, they are given the updated Transaction
     10. When a User deletes a Transaction, they are given the old Transaction id, payee, timestamp, & amount
-    17. When a User marks a Transaction as "spent from" a given Envelope, they are given their updated Available Funds Balance, the updated Envelope balance, & the updated Transaction -- _**but this only happens if there are enough funds available in the Envelope**_ \
+    17. When a User marks a Transaction as "spent from" a given Envelope, they are given their updated Available Funds Balance, the updated Envelope balance, & the updated Transaction -- _**but this only happens if there are enough funds available in the Envelope**_
 
 11. When a User creates an Envelope, they are given the new Envelope
     1. When a User moves money from their Available Funds Balance to an Envelope, they are given their updated Available Funds Balance & the updated Envelope
