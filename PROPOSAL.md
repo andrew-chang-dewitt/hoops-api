@@ -70,7 +70,9 @@ I'm not sure yet what these actions look like in UI, but I've done the following
 29. A User can leave a Shared User
 30. A User can vote to delete the data of a Shared User (if all agree, then it will be deleted)
 
-Stretch goals:
+#### Stretch Goals
+
+Eventually, I'd like the application to build the following stories as well:
 
 1. A User can import Transactions from a csv
 2. A User can sign up for new Transactions to be auto-imported from participating bank accounts (using Plaid)
