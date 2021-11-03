@@ -31,11 +31,10 @@ Then eventually this hypothetical web-app could be expanded as either an OSS rel
 Planning spending in a flexible, extensible, & low-friction fashion while being usable by multiple people simultaneously. 
 Modeled after my favorite now-defunct fintech's budgeting tools.
 
-### Which technologies will you need (files, databases, GUIs?):*
+### Which technologies will you need (files, databases, GUIs?):
 
-  1. Database (SQLite or PostgreSQL)
-  2. Web server (JSON REST API - Bottle or Flask)
-  3. maybe a front-end, eventually (React/React Native)
+  1. Database (PostgreSQL&mdash;offers better types for currency via NUMERIC, UUID keys, & built-in password hashing tools)
+  2. Web server (JSON REST API via Flask&mdash;offers better routing encapsulation via Blueprints)
 
 Use Case Analysis
 ---
@@ -106,45 +105,43 @@ Data Design
 
 ### What data is your program really about?
 
-Transactions, Envelopes, & Users. 
-Transactions are exactly what their name says: an amount of money either going in from or coming out to a specific payee at a specific time.
-Envelopes are a concept that represents an amount of money reserved for a specific purpose (e.g. a savings goal like a vacation or an expense like rent or groceries).
-A User is also exactly what the name says: a person using this budgeting program.
+Three core data types:
+
+1. _**Transactions:**_ \
+  Exactly what their name says: an amount of money either going in from or coming out to a specific payee at a specific time.
+  
+2. _**Envelopes:**_ \
+  A concept that represents an amount of money reserved for a specific purpose (e.g. a savings goal like a vacation or an expense like rent or groceries).
+  
+3. _**Users:**_ \
+  Also exactly what the name says: a person using this budgeting program.
   
 Besides those three core data types, the following ancillary data types exist:
   
-- Accounts: 
-    
+- _**Accounts:**_ \
   A bank account, credit card, cash hidden under the mattress, etc. 
   Individual Transactions belong to an Account.
     
-- Envelope changes:
-  
+- _**Envelope changes:**_ \
   A record of each time the balance of a specific Envelope changes & how much it changed by.
   Used to analyze spending & saving over time.
   
-- Shared Users:
-  
+- _**Shared Users:**_ \
   A Shared User is simply a non-login User, that multiple login Users can act as. 
   This means a login User can have their own Accounts & Envelopes, then they can click a button to manage the Accounts & Envelopes of a Shared User that one or more other people may be able to manage as well.
 
-### What is the best way to represent that data? (database, object, arrays)
+### What is the best way to represent that data? Will the data need to be persistent? How will you make that happen?
 
-Database
+A Database is the best way to grant both data persistence & represent the data for storage.
+The following Entity Relationship Diagram represents the database design:
 
-### Will the data need to be persistent? How will you make that happen?
-
-Yes, using a database.
+![Entity Relationship Diagram](/data-er.svg)
 
 ### Will the data need to be aggregated into a larger structure? How?
 
 Yes, at times an API response will need to return data from multiple data types (or tables).
 This will be done using JOIN queries & VIEWS.
 The application will conceptualize these VIEWS as Models to abstract the queries & data aggregation & validation away from the application logic.
-
-The following Entity Relationship Diagram represents the database design:
-
-![Entity Relationship Diagram](/data-er.svg)
 
 UI Design
 ---
