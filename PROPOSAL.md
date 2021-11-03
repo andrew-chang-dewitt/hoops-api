@@ -8,36 +8,37 @@ Final Project Proposal
 Project Summary
 ---
 
-- *[x] Proposed project title:*
+### Proposed project title:
 
-  Currently developing with the title "Hoops", which is the literal translation of a slang word for money in Taiwan. 
-  Not really spending much time on the name yet, but I expect this to change eventually.
+Currently developing with the title "Hoops", which is the literal translation of a slang word for money in Taiwan. 
+Not really spending much time on the name yet, but I expect this to change eventually.
 
-- *[x] Longer description of project:*
+### Longer description of project:
 
-  A back-end REST API serving JSON data for a budgeting application.
-  The goal is to build something similar to the budgeting tools offered by a fintech I used to use before it was killed off in a merger.
-  Starting with a simplified version that's based on the envelope system & intended to offer privacy to multiple users while allowing them to share a budget, if desired.
+A back-end REST API serving JSON data for a budgeting application.
+The goal is to build something similar to the budgeting tools offered by a fintech I used to use before it was killed off in a merger.
+Starting with a simplified version that's based on the envelope system & intended to offer privacy to multiple users while allowing them to share a budget, if desired.
   
-- *[x] Intended user:*
+### Intended user:
   
-  A User of this project is defined as a client-side web-app that will consume this API over HTTPS. 
-  This means the UI of this application is the API itself.
-  The goal is for this hypothetical web application to be built later to create a GUI that can be used by my wife & I.
-  Then eventually this hypothetical web-app could be expanded as either an OSS release for self-hosting or a SAAS hosted option.
+A User of this project is defined as a client-side web-app that will consume this API over HTTPS. 
+This means the UI of this application is the API itself.
+The goal is for this hypothetical web application to be built later to create a GUI that can be used by my wife & I.
+Then eventually this hypothetical web-app could be expanded as either an OSS release for self-hosting or a SAAS hosted option.
   
-- *[x] What problem is project trying to solve?:*
+### What problem is project trying to solve?:
 
-  Planning spending in a flexible, extensible, & low-friction fashion while being usable by multiple people simultaneously. 
-  Modeled after my favorite now-defunct fintech's budgeting tools.
+Planning spending in a flexible, extensible, & low-friction fashion while being usable by multiple people simultaneously. 
+Modeled after my favorite now-defunct fintech's budgeting tools.
 
-- *[x] Which technologies will you need (files, databases, GUIs?):*
+### Which technologies will you need (files, databases, GUIs?):*
 
   1. Database (SQLite or PostgreSQL)
   2. Web server (JSON REST API - Bottle or Flask)
   3. maybe a front-end, eventually (React/React Native)
 
-### Use Case Analysis
+Use Case Analysis
+---
 
 I've written the following Use Case Analysis as "User stories":
 
@@ -73,7 +74,7 @@ I've written the following Use Case Analysis as "User stories":
     24. When a User updates their password, they are given a success message (then their JWT should be revoked & they should be asked to log in again)
     25. When a User deletes their data, confirmation is requested, then if they confirm, they are given a success message
 
-#### Stretch Goals
+### Stretch Goals
 
 Eventually, I'd like the application to build the following stories as well:
 
@@ -103,43 +104,43 @@ Eventually, I'd like the application to build the following stories as well:
 Data Design
 ---
 
-- *[x] What data is your program really about?*
+### What data is your program really about?
 
-  Transactions, Envelopes, & Users. 
-  Transactions are exactly what their name says: an amount of money either going in from or coming out to a specific payee at a specific time.
-  Envelopes are a concept that represents an amount of money reserved for a specific purpose (e.g. a savings goal like a vacation or an expense like rent or groceries).
-  A User is also exactly what the name says: a person using this budgeting program.
+Transactions, Envelopes, & Users. 
+Transactions are exactly what their name says: an amount of money either going in from or coming out to a specific payee at a specific time.
+Envelopes are a concept that represents an amount of money reserved for a specific purpose (e.g. a savings goal like a vacation or an expense like rent or groceries).
+A User is also exactly what the name says: a person using this budgeting program.
   
-  Besides those three core data types, the following ancillary data types exist:
+Besides those three core data types, the following ancillary data types exist:
   
-  - Accounts: 
+- Accounts: 
     
-    A bank account, credit card, cash hidden under the mattress, etc. 
-    Individual Transactions belong to an Account.
+  A bank account, credit card, cash hidden under the mattress, etc. 
+  Individual Transactions belong to an Account.
     
-  - Envelope changes:
+- Envelope changes:
   
-    A record of each time the balance of a specific Envelope changes & how much it changed by.
-    Used to analyze spending & saving over time.
+  A record of each time the balance of a specific Envelope changes & how much it changed by.
+  Used to analyze spending & saving over time.
   
-  - Shared Users:
+- Shared Users:
   
-    A Shared User is simply a non-login User, that multiple login Users can act as. 
-    This means a login User can have their own Accounts & Envelopes, then they can click a button to manage the Accounts & Envelopes of a Shared User that one or more other people may be able to manage as well.
+  A Shared User is simply a non-login User, that multiple login Users can act as. 
+  This means a login User can have their own Accounts & Envelopes, then they can click a button to manage the Accounts & Envelopes of a Shared User that one or more other people may be able to manage as well.
 
-- *[x] What is the best way to represent that data? (database, object, arrays)*
+### What is the best way to represent that data? (database, object, arrays)
 
-  Database
+Database
 
-- *[x] Will the data need to be persistent? How will you make that happen?*
+### Will the data need to be persistent? How will you make that happen?
 
-  Yes, using a database.
+Yes, using a database.
 
-- *[x] Will the data need to be aggregated into a larger structure? How*
+### Will the data need to be aggregated into a larger structure? How?
 
-  Yes, at times an API response will need to return data from multiple data types (or tables).
-  This will be done using JOIN queries & VIEWS.
-  The application will conceptualize these VIEWS as Models to abstract the queries & data aggregation & validation away from the application logic.
+Yes, at times an API response will need to return data from multiple data types (or tables).
+This will be done using JOIN queries & VIEWS.
+The application will conceptualize these VIEWS as Models to abstract the queries & data aggregation & validation away from the application logic.
 
 The following Entity Relationship Diagram represents the database design:
 
