@@ -125,17 +125,13 @@ Besides those three core data types, the following ancillary data types exist:
 - _**Envelope changes:**_ \
   A record of each time the balance of a specific Envelope changes & how much it changed by.
   Used to analyze spending & saving over time.
-  
-- _**Shared Users:**_ \
-  A Shared User is simply a non-login User, that multiple login Users can act as. 
-  This means a login User can have their own Accounts & Envelopes, then they can click a button to manage the Accounts & Envelopes of a Shared User that one or more other people may be able to manage as well.
+
+![Entity Relationship Diagram](/data-er.svg)
 
 ### What is the best way to represent that data? Will the data need to be persistent? How will you make that happen?
 
 A Database is the best way to grant both data persistence & represent the data for storage.
 The following Entity Relationship Diagram represents the database design:
-
-![Entity Relationship Diagram](/data-er.svg)
 
 ### Will the data need to be aggregated into a larger structure? How?
 
