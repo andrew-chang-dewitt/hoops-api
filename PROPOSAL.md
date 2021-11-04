@@ -122,8 +122,6 @@ Besides those three core data types, the following ancillary data types exist:
   A bank account, credit card, cash hidden under the mattress, etc. 
   Individual Transactions belong to an Account.
 
-![Entity Relationship Diagram](/data-er.svg)
-
 ### What is the best way to represent that data? Will the data need to be persistent? How will you make that happen?
 
 A Database is the best way to grant both data persistence & represent the data for storage.
@@ -134,6 +132,10 @@ The following Entity Relationship Diagram represents the database design:
 Yes, at times an API response will need to return data from multiple data types (or tables).
 This will be done using JOIN queries & VIEWS.
 The application will conceptualize these VIEWS as Models to abstract the queries & data aggregation & validation away from the application logic.
+
+The following Entity Relationship Diagram represents the database design:
+
+![Entity Relationship Diagram](/data-er.svg)
 
 UI Design
 ---
