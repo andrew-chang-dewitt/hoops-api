@@ -8,30 +8,30 @@ Final Project Proposal
 Project Summary
 ---
 
-### Proposed project title:*
+### Proposed project title:
 
 Currently developing with the title "Hoops", which is the literal translation of a slang word for money in Taiwan. 
 Not really spending much time on the name yet, but I expect this to change eventually.
 
-### Longer description of project:*
+### Longer description of project:
 
 A back-end REST API serving JSON data for a budgeting application.
 The goal is to build something similar to the budgeting tools offered by a fintech I used to use before it was killed off in a merger.
 Starting with a simplified version that's based on the envelope system & intended to offer privacy to multiple users while allowing them to share a budget, if desired.
   
-### Intended user:*
+### Intended user:
   
 A User of this project is defined as a client-side web-app that will consume this API over HTTPS. 
 This means the UI of this application is the API itself.
 The goal is for this hypothetical web application to be built later to create a GUI that can be used by my wife & I.
 Then eventually this hypothetical web-app could be expanded as either an OSS release for self-hosting or a SAAS hosted option.
   
-### What problem is project trying to solve?:*
+### What problem is project trying to solve?:
 
 Planning spending in a flexible, extensible, & low-friction fashion while being usable by multiple people simultaneously. 
 Modeled after my favorite now-defunct fintech's budgeting tools.
 
-### Which technologies will you need (files, databases, GUIs?):*
+### Which technologies will you need (files, databases, GUIs?):
 
 1. Database (SQLite or PostgreSQL)
 2. Web server (JSON REST API - Bottle or Flask)
