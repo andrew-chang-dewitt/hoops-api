@@ -63,7 +63,7 @@ I've written the following Use Case Analysis as "User stories":
     14. When a User changes the name of an Envelope, they are given the updated Envelope
     15. When a User adds/changes/removes a description for an Envelope, they are given the updated Envelope
     16. When a User marks an Envelope as closed, they are given the id & name of the closed Envelope
-    18. When a User requests the history of funds moving in & out of an Envelope, they are given a list of Envelope Changes (time funds were moved in/out & the amount moved) & Transactions marked as "spent from" the Envelope
+    18. When a User requests the history of an Envelope, they are given a paginated list of Transactions marked as "spent from" the Envelope
 
 19. When a User requests their Available Funds Balance (i.e. how much funds are "available"&mdash;the portion of Total Balance not reserved in an Envelope), they are given their Available Funds Balance
 20. When a User requests their Total Balance across all accounts (including funds reserved in an Envelope), they are given their Total Balance
