@@ -121,10 +121,6 @@ Besides those three core data types, the following ancillary data types exist:
 - _**Accounts:**_ \
   A bank account, credit card, cash hidden under the mattress, etc. 
   Individual Transactions belong to an Account.
-    
-- _**Envelope changes:**_ \
-  A record of each time the balance of a specific Envelope changes & how much it changed by.
-  Used to analyze spending & saving over time.
 
 ![Entity Relationship Diagram](/data-er.svg)
 
