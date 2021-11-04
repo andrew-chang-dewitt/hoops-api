@@ -103,7 +103,7 @@ Eventually, I'd like the application to build the following stories as well:
 Data Design
 ---
 
-### What data is your program really about?*
+### What data is your program really about?
 
 Three core data types:
 
@@ -134,15 +134,15 @@ Besides those three core data types, the following ancillary data types exist:
 
 - _**Reocurrance Schedules:**_ \
 
-### What is the best way to represent that data? (database, object, arrays)*
+### What is the best way to represent that data? *(database, object, arrays)*
 
 Database
 
-### Will the data need to be persistent? How will you make that happen?*
+### Will the data need to be persistent? How will you make that happen?
 
 Yes, using a database.
 
-### Will the data need to be aggregated into a larger structure? How*
+### Will the data need to be aggregated into a larger structure? How?
 
 Yes, at times an API response will need to return data from multiple data types (or tables).
 This will be done using JOIN queries & VIEWS.
