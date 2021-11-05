@@ -8,22 +8,27 @@ Run by either calling `python -m hoops.app` or
 Source distributed under an MIT License.
 """
 from dataclasses import dataclass
+from datetime import date, datetime
 import os
-from typing import Callable, Tuple
+from typing import Any, Callable
 
-from flask import jsonify, Flask, Response
+from flask import jsonify, Flask
+from flask.json import JSONEncoder
 from flask.typing import ResponseReturnValue
+from pydantic import ValidationError
 from werkzeug.exceptions import HTTPException
 
 # helpers
 from .database import create_client, SyncClient, NoResultFound
 from .response import ErrResponse
+from .errors import BadRequest
 # route handlers
 from .transactions import create_transactions
 from .status import status
 
 
 def is_debug(env_value: str) -> bool:
+    """Check if given value indicates to run app in DEBUG mode."""
     if env_value == '1':
         return True
     if env_value == '0':
@@ -40,10 +45,19 @@ class Config:
     Provides sane defaults that can be overridden on creation.
     """
 
-    # indicate that the application is created for testing only
-    testing: bool = False
     database: SyncClient = create_client()
     debug: bool = is_debug(os.getenv('FLASK_DEBUG', '0'))
+
+
+class ISODateJSONEncoder(JSONEncoder):
+    """Custom json encoder that uses ISO date format for date & datetime."""
+
+    def default(self, o: Any) -> Any:
+        """Serialize the given object as JSON."""
+        if isinstance(o, (date, datetime)):
+            return o.isoformat()
+
+        return super().default(o)
 
 
 def create_app(config: Config = Config()) -> Flask:
@@ -63,6 +77,9 @@ def create_app(config: Config = Config()) -> Flask:
 
     # create app
     app = Flask(__name__)
+
+    # fix jsonify's encodign to use ISO date format
+    app.json_encoder = ISODateJSONEncoder
 
     # error handlers
 
@@ -89,6 +106,10 @@ def create_app(config: Config = Config()) -> Flask:
 
         return generic_err_handler
 
+    # 400 when a request is badly formed
+    for err_type in BadRequest, ValidationError:
+        app.register_error_handler(
+            err_type, create_err_handler(400))  # type: ignore
     # 404 when database returns no results for a query
     # mypy can't infer type as fitting ErrorHandlerCallable protocol correctly
     app.register_error_handler(
