@@ -50,9 +50,11 @@ def read_one(
 
 def read_many(
     limit: Optional[Union[str, int]],
+    page: Optional[Union[str, int]],
     model: Model
-) -> Return[Optional[int], Optional[int], List[Data]]:
+) -> Return[Tuple[Optional[int], Optional[int]], Optional[int], List[Data]]:
     """Validate limit as None or int & return with database method."""
     valid_limit = int(limit) if limit else None
+    valid_page = int(page) if page else None
 
-    return valid_limit, model.read.many
+    return (valid_limit, valid_page), model.read.many

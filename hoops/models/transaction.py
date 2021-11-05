@@ -29,16 +29,29 @@ class TransactionData(ModelData):
 class TransactionReader(SyncRead[TransactionData]):
     """Additional read methods."""
 
-    def many(self, limit: Optional[int]) -> List[TransactionData]:
+    def many(
+        self,
+        limit: Optional[int],
+        page: Optional[int]
+    ) -> List[TransactionData]:
         """Return many transaction records."""
+        # default to 50 records
+        actual_limit = limit if limit is not None else 50
+        # default to first 0th page
+        actual_page = page if page is not None else 0
+        # offset is n times limit
+        # if limit = 50: (0, 0), (1, 50), ... (n+1, 50*n)
+        offset = actual_page * actual_limit
+
         query = sql.SQL(
             'SELECT * '
             'FROM {table} '
-            'ORDER BY timestamp '
-            'LIMIT {limit}'
+            'ORDER BY timestamp DESC '
+            'LIMIT {limit} OFFSET {offset};'
         ).format(
             table=self._table,
-            limit=sql.Literal(limit),
+            limit=sql.Literal(actual_limit),
+            offset=sql.Literal(offset),
         )
 
         query_result: List[RealDictRow] = \
