@@ -4,17 +4,17 @@
 import unittest
 from uuid import uuid1, UUID
 
+# test helpers
+# pylint thinks test is a standard import
+# pylint: disable=wrong-import-order
+from tests import factories
+from tests.unit.helpers import mock_client, mock_model
+
 # internal dependencies
 from hoops.models import (
     Transaction as Model,
     TransactionData as Data,
 )
-
-# test helpers
-# pylint thinks test is a standard import
-# pylint: disable=wrong-import-order
-from tests.unit import factories
-from tests.unit.helpers import mock_client, mock_model
 
 # module under test
 from hoops.core import transactions as trn
