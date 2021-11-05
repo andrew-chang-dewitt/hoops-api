@@ -137,13 +137,52 @@ The following Entity Relationship Diagram represents the database design:
 
 ![Entity Relationship Diagram](/data-er.svg)
 
-UI Design
+UI Design - API Reference
 ---
 
 This app is the back-end REST API serving JSON only, with the User being a Client consuming the API over HTTPS.
 This means the UI is a series of API endpoints used to achieve the stories written above in the [Use Case Analysis](#use-case-analysis) section.
 
 > *NOTE:* This section still needs to be expanded to full documentation for the API by creating an exhaustive list of API endpoints, accepted arguments (POST body, query args, or URI args), & endpoint return schema.
+
+### Transactions
+
+`Transaction` objects are defined with the following Schema:
+
+#### `Transaction`
+
+A JSON object with the following properties:
+
+- `id` [UUID hexadecimal string]: \
+  a unique identifier
+
+- `amount` [number, limited to the hundreds place (1 * 10^-2)]: \
+  represents the amount of money involved
+
+- `description` [string]: \
+  text to give more info about the transaction
+  
+- `payee` [string]: \
+  text indicating who the transaction paid from or to
+
+- `timestamp` [ISO formatted date string with time & timezone]: \
+  the date & time the transaction occurred
+
+The following routes are all for fetching, creating, or manipulating Transaction objects.
+
+#### GET `/one/<id>`
+
+Arguments:
+
+- `id`: A UUID hexadecimal string corresponding to a desired Transaction
+
+Response:
+
+- On success: A `Transaction` object.
+- On failure: 
+  - 400 Bad Request if `id` is invalid
+  - 404 Not Found if no such `Transaction` exists in database
+  - 500 Internal Server Error for all other failures
 
 Algorithm
 ---
