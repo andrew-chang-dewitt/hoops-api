@@ -178,10 +178,10 @@ Arguments:
 
 Response:
 
-- On success: A `Transaction` object.
+- On success: A [`Transaction`](#schema-transaction) object.
 - On failure: 
   - 400 Bad Request if `id` is invalid
-  - 404 Not Found if no such `Transaction` exists in database
+  - 404 Not Found if no such [`Transaction`](#schema-transaction) exists in database
   - 500 Internal Server Error for all other failures
 
 Algorithm
