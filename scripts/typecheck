@@ -29,22 +29,11 @@ function check {
     mypy hoops
     mypy_src_result=$?
 
-    if [ $mypy_src_result != 0 ]; then
-        echo "Error in typechecking, see output above."
-        exit $mypy_src_result
-    fi
-
-
     echo ""
-    echo "Checking ./test..."
+    echo "Checking ./tests..."
     echo ""
-    mypy test
+    mypy tests
     mypy_tests_result=$?
-
-    if [ $mypy_tests_result != 0 ]; then
-        echo "Error in typechecking, see output above."
-        exit $mypy_tests_result
-    fi
 
     # return to scripts directory
     cd $SCRIPT_DIR
@@ -52,3 +41,11 @@ function check {
 }
 
 check
+
+if [ $mypy_src_result != 0 ]; then
+    echo "Error in typechecking application, see output above."
+    exit $mypy_src_result
+elif [ $mypy_tests_result != 0 ]; then
+    echo "Error in typechecking tests, see output above."
+    exit $mypy_tests_result
+fi
