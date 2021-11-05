@@ -6,6 +6,7 @@ Exposes two methods:
 """
 
 from contextlib import contextmanager
+from dataclasses import dataclass
 import io
 import os
 import random
@@ -21,18 +22,27 @@ from psycopg2.sql import Composed
 from sqlbag import (
     S,
     load_sql_from_folder,
-    load_sql_from_file)
+)
 
-# DB_USER = os.getenv('DB_USER', 'postgres')
-# DB_PASS = os.getenv('DB_PASS', 'postgres')
-# DB_HOST = os.getenv('DB_HOST', 'localhost')
-# DB_NAME = os.getenv('DB_NAME', 'postgres')
-DB_USER = os.getenv('DB_USER', 'test')
-DB_PASS = os.getenv('DB_PASS', 'pass')
-DB_HOST = os.getenv('DB_HOST', 'localhost')
-DB_NAME = os.getenv('DB_NAME', 'dev')
 
-DB_URL = f'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:5432/{DB_NAME}'
+PRJ_DIR = os.path.dirname(os.path.realpath(__file__))
+
+
+@dataclass
+class Config:
+    """Encapsulate database configuration data."""
+
+    user: str = os.getenv('DB_USER', 'test')
+    password: str = os.getenv('DB_PASS', 'pass')
+    host: str = os.getenv('DB_HOST', 'localhost')
+    port: int = int(os.getenv('DB_PORT', '5432'))
+    name: str = os.getenv('DB_NAME', 'dev')
+
+    @property
+    def url(self) -> str:
+        """Generate a database connection string."""
+        return f"postgresql://{self.user}:{self.password}" \
+            f"@{self.host}:{self.port}/{self.name}"
 
 
 def _try_connect(dsn: str, retries: int = 1) -> Any:
@@ -47,7 +57,7 @@ def _try_connect(dsn: str, retries: int = 1) -> Any:
             connection = connect(dsn)
         except OperationalError as err:
             print(type(err))
-            if retries > 12:
+            if retries > 1:
                 raise ConnectionError(
                     'Max number of connection attempts has been reached (12)'
                 ) from err
@@ -136,7 +146,10 @@ def _load_pre_migration(dsn: str) -> None:
     connection.set_session(autocommit=True)
 
     with connection.cursor() as cursor:
-        cursor.execute(open('migrations/production.dump.sql', 'r').read())
+        with open(
+            f'{PRJ_DIR}/migrations/production.dump.sql', 'r', encoding="UTF-8"
+        ) as prod_schema_file:
+            cursor.execute(prod_schema_file.read())
 
     connection.close()
 
@@ -147,7 +160,7 @@ def _load_from_app(session: S) -> None:
 
     Uses all .sql files stored at ./hoops/models/**
     """
-    load_sql_from_folder(session, 'hoops/models')
+    load_sql_from_folder(session, f'{PRJ_DIR}/hoops/models')
 
 
 @contextmanager
@@ -168,22 +181,24 @@ def _get_schema_diff(
 
 
 @contextmanager
-def _temp_db(host: str, user: str, password: str) -> Generator[str, Any, Any]:
+def _temp_db(config: Config) -> Generator[str, Any, Any]:
     """Create, yield, & remove a temporary database as context."""
-    connection = _resilient_connect(
-        f'postgres://{user}:{password}@{host}/{DB_NAME}')
+    connection = _resilient_connect(config.url)
     connection.set_session(autocommit=True)
     name = _temp_name()
 
     with connection.cursor() as cursor:
         _create_db(cursor, name)
-        yield f'postgres://{user}:{password}@{host}/{name}'
+        yield Config(**{  # type: ignore
+            **config.__dict__,
+            'name': name,
+        }).url
         _drop_db(cursor, name)
 
     connection.close()
 
 
-def sync(args: List[str]) -> None:
+def sync(args: List[str], config: Config = Config()) -> None:
     """
     Compare live database to application schema & apply changes to database.
 
@@ -198,16 +213,12 @@ def sync(args: List[str]) -> None:
         no_prompt = True
 
     # create temp database for app schema
-    with _temp_db(
-            host=DB_HOST,
-            user=DB_USER,
-            password=DB_PASS
-    ) as temp_db_url:
-        print(f'db url: {DB_URL}')
+    with _temp_db(config) as temp_db_url:
+        print(f'db url: {config.url}')
         print(f'temp url: {temp_db_url}')
 
         # create sessions for current db state & target schema
-        with S(DB_URL) as from_schema_session, \
+        with S(config.url) as from_schema_session, \
                 S(temp_db_url) as target_schema_session:
             # load target schema to temp db
             _load_from_app(target_schema_session)
@@ -240,7 +251,7 @@ def sync(args: List[str]) -> None:
                 print('Already synced.')
 
 
-def pending(_: List[str]) -> None:
+def pending(_: List[str], config: Config = Config()) -> None:
     """
     Compare a production schema to application schema & save difference.
 
@@ -249,15 +260,8 @@ def pending(_: List[str]) -> None:
     difference at `./migrations/pending.sql`.
     """
     # create temporary databases for prod & target schemas
-    with _temp_db(
-            host=DB_HOST,
-            user=DB_USER,
-            password=DB_PASS
-    ) as prod_schema_db_url, _temp_db(
-            host=DB_HOST,
-            user=DB_USER,
-            password=DB_PASS
-    ) as target_db_url:
+    with _temp_db(config) as prod_schema_db_url, \
+            _temp_db(config) as target_db_url:
         print(f'prod temp url: {prod_schema_db_url}')
         print(f'target temp url: {target_db_url}')
 
@@ -282,7 +286,9 @@ def pending(_: List[str]) -> None:
                 print('No changes needed, setting pending.sql to empty.')
 
             # write pending changes to file
-            with io.open('migrations/pending.sql', 'w') as file:
+            with io.open(
+                'migrations/pending.sql', 'w', encoding="UTF-8"
+            ) as file:
                 file.write(migration.sql)
 
             print('Changes written to ./migrations/pending.sql.')
