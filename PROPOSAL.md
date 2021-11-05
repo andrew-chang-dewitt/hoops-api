@@ -145,11 +145,11 @@ This means the UI is a series of API endpoints used to achieve the stories writt
 
 > *NOTE:* This section still needs to be expanded to full documentation for the API by creating an exhaustive list of API endpoints, accepted arguments (POST body, query args, or URI args), & endpoint return schema.
 
-### Transactions
+### Routes: `/transaction`
 
-`Transaction` objects are defined with the following Schema:
+`Transaction` objects are defined as follows:
 
-#### `Transaction`
+#### Schema: `Transaction`
 
 A JSON object with the following properties:
 
