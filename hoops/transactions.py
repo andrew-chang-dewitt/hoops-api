@@ -1,6 +1,6 @@
 """Blueprint for /transaction routes."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from flask import (
     # current_app,
@@ -17,8 +17,9 @@ from hoops.core.transactions import (
     read_one,
     read_many,
 )
-from .response import OkResponse
-from .models.transaction import (
+from hoops.errors import BadRequest
+from hoops.response import OkResponse
+from hoops.models.transaction import (
     Transaction as Model,
     TransactionData as Data,
 )
@@ -48,32 +49,43 @@ def create_transactions(database: SyncClient) -> Blueprint:
     #
 
     @transactions.route("/new", methods=["POST"])
-    def new() -> Response:
+    def new() -> Tuple[Response, int]:
         """Save given data as new Transaction."""
         body: Optional[Dict[str, Any]] = request.get_json()
 
         if body is None:
-            return jsonify("Request body must not be empty.")
+            raise BadRequest("Request body must not be Null.")
 
         valid_data, db_method = create_one(body, model)
         result: Data = db_method(valid_data)
 
-        return jsonify(OkResponse(result))
+        return jsonify(result.dict()), 201
 
     @transactions.route("/one/<tran_id>", methods=["GET"])
     def one(tran_id: str) -> Response:
         """Get a specific Transaction by a given id."""
-        valid_data, db_method = read_one(tran_id, model)
+        try:
+            valid_data, db_method = read_one(tran_id, model)
+        except ValueError as err:
+            print(str(err))
+
+            if 'badly formed hexadecimal' in str(err):
+                raise BadRequest('Invalid transaction id.') from err
+
+            raise err
+
         result: Data = db_method(valid_data)
 
-        return jsonify(OkResponse(result))
+        return jsonify(result.dict())
 
-    @transactions.route("/many/<limit>", methods=["GET"])
-    def many(limit: str) -> Response:
+    @transactions.route("/many", methods=["GET"])
+    def many() -> Response:
         """Get many Transactions."""
-        valid_limit, db_method = read_many(limit, model)
-        result: List[Data] = db_method(valid_limit)
+        limit = request.args.get('limit', None)
+        page = request.args.get('page', None)
+        valid_args, db_method = read_many(limit, page, model)
+        result: List[Data] = db_method(*valid_args)
 
-        return jsonify(OkResponse(result))
+        return jsonify([item.dict() for item in result])
 
     return transactions
