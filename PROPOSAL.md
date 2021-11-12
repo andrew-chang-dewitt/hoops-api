@@ -49,7 +49,7 @@ I've written the following Use Case Analysis as "User stories":
     6. When a User edits the name of an Account, the Account is updated & they are given the updated Account
     7. When a User marks an Account as closed, the account is updated & they are given the id & name of the closed account
 
-2. When a User adds a Transaction to an Account, an Account is saved & they are given the new Transaction
+2. When a User adds a Transaction to an Account, a Transaction is saved & they are given the new Transaction
     1. When a User requests their Transactions for a given Account, they are given a paginated list of Transactions
     4. When a User requests their Transactions for all Accounts, they are given a paginated list of Transactions
     8. When a User edits the payee, description, &/or amount of a Transaction, the Transaction is updated & they are given the updated Transaction
