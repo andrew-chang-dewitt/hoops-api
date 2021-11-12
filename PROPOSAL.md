@@ -218,7 +218,7 @@ CRUD operations on table `envelope`.
   
 **Methods:** 
 
-- ready.many_by_user
+- read.many_by_user
   1. build `SELECT * FROM {table} where user_id = {id}` query from instance table name & given user id
   2. execute & commit query
   3. build appropriate list of Data Objects using query results
@@ -228,7 +228,20 @@ CRUD operations on table `envelope`.
 
 CRUD operations on table `user`.
   
-**Methods:** No new behavior.
+**Methods:**
+
+- OVERLOAD create.one
+  1. build `INSERT INTO {table}(handle, password, full_name, preferred_name) VALUES({handle}, crypt({password}, gen_salt('bf')), {full_name}, {preferred_name})` query using handle, password, full_name, & preferred_name attributes on given UserDataIn object with encryption done by PostgreSQL's pgycrypto extension's `crypt` & `gen_salt` procedures
+  2. execute & commit query
+  3. build appropriate UserDataOut object using query results
+  4. return object
+
+- read.authenticate
+  1. build `SELECT * FROM {table} WHERE handle = {given_handle} AND password = crypt({given_password}, password);` query using given User handle & password with password decryption done by PostgreSQL's pgycrypto extension's `crypt` procedure
+  2. execute & commit query
+  3. build appropriate UserDataOut object using query results
+  4. return object
+
 
 #### AccountModel(ModelABC)
 
@@ -271,13 +284,22 @@ Data objects have no initializer beyond the one provided by BaseModel.
   _Note:_ this isn't the same thing as how much funds are available
 - user_id: the id of the User the Envelope belongs to (UUID)
 
-#### UserData
+#### UserDataIn
 
 **Properties:**
 
 - id: a unique identifier (UUID)
-- name: a unique username (str)
+- handle: a unique username (str)
 - password: a hashed & salted password (str)
+- full_name: user's full name (str)
+- preferred_name: user's preferred name (optional[str])
+
+#### UserDataOut
+
+**Properties:**
+
+All of UserDataIn's properties except password.
+Never send a user their UserDataIn object as this would send their plaintext password.
 
 #### AccountData
 
