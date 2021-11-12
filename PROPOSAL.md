@@ -28,13 +28,13 @@ Then eventually this hypothetical web-app could be expanded as either an OSS rel
   
 ### What problem is project trying to solve?:
 
-Planning spending in a flexible, extensible, & low-friction fashion while being usable by multiple people simultaneously. 
+Planning & tracking spending in a flexible, extensible, & low-friction fashion while being usable by multiple people simultaneously. 
 Modeled after my favorite now-defunct fintech's budgeting tools.
 
 ### Which technologies will you need (files, databases, GUIs?):
 
   1. Database (PostgreSQL&mdash;offers better types for currency via NUMERIC, UUID keys, & built-in password hashing tools)
-  2. Web server (JSON REST API via Flask&mdash;offers better routing encapsulation via Blueprints)
+  2. Web server (JSON REST API via FastAPI&mdash;offers better routing encapsulation via APIRouter & great type validation, API documentation, & is extensible via middleware functions)
 
 Use Case Analysis
 ---
