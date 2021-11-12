@@ -145,56 +145,230 @@ This means the UI is a series of API endpoints used to achieve the stories writt
 
 > *NOTE:* This section still needs to be expanded to full documentation for the API by creating an exhaustive list of API endpoints, accepted arguments (POST body, query args, or URI args), & endpoint return schema.
 
-### Routes: `/transaction`
-
-`Transaction` objects are defined as follows:
-
-#### Schema: `Transaction`
-
-A JSON object with the following properties:
-
-- `id` [UUID hexadecimal string]: \
-  a unique identifier
-
-- `amount` [number, limited to the hundreds place (1 * 10^-2)]: \
-  represents the amount of money involved
-
-- `description` [string]: \
-  text to give more info about the transaction
-  
-- `payee` [string]: \
-  text indicating who the transaction paid from or to
-
-- `timestamp` [ISO formatted date string with time & timezone]: \
-  the date & time the transaction occurred
-
-The following routes are all for fetching, creating, or manipulating Transaction objects.
-
-#### GET `/one/<id>`
-
-Arguments:
-
-- `id`: A UUID hexadecimal string corresponding to a desired Transaction
-
-Response:
-
-- On success: A [`Transaction`](#schema-transaction) object.
-- On failure: 
-  - 400 Bad Request if `id` is invalid
-  - 404 Not Found if no such [`Transaction`](#schema-transaction) exists in database
-  - 500 Internal Server Error for all other failures
 
 Algorithm
 ---
 
-*Once you've done the previous steps, you should be ready to start putting together your algorithm. Remember, an algorithm is simply a list of instructions written in English that are so detailed that they can be translated to programming code.*
+### Model Objects
 
-*Most projects will benefit from an OOP design. Identify the main objects needed in your program. Generally each data element will be a class, and each screen of a GUI will be a class. For each class in your project:*
+Objects that encapsulate CRUD operations on different database tables.
 
-- [ ] *Define the data members - what are the key data elements of the class?*
-- [ ] *Describe the initializer - Initializers always create and populate the data members. Will you read in parameters? Have default values? both?*
-- [ ] *Describe any other housekeeping that may need to happen in the initializer*
-- [ ] *Define access methods for all data members. Build appropriate getters and setters*
-- [ ] *Define any properties or virtual properties you class may need*
-- [ ] *Identify any methods your class will need beyond access modifiers*
-- [ ] *Flesh out each method just like the function analysis below*
+#### ModelABC:
+
+**Properties:**
+
+These objects have no public properties, they simply encapsulate functions for getting information from the database.
+
+**Initializer:**
+
+All models have roughly the same initializer behavior:
+
+1. save the given table name as a private instance attribute
+2. build the read, create, update, & delete attributes to contain methods for all database queries for that model
+
+**Methods:** 
+
+All models have the same shared methods:
+
+- create.one
+  1. create empty `columns` & `values` lists
+  2. iterate over key, value pairs of dictionary made using `.items()` method on given data object's `.dict()` method
+    1. append keys to `columns`
+    2. append values to `values`
+  3. format `columns` & `values` lists as lists of columns & values enclosed by parenthesis for use in SQL INSERT INTO table {columns} VALUES {values}; query
+  4. build INSERT query using formatted lists
+  5. execute & commit query
+  6. build appropriate Data Object or list of Data Objects using query results
+  7. return object or list
+
+- read.one_by_id
+  1. build SELECT query using given id
+  2. execute & commit query
+  3. build appropriate Data Object using query results
+  4. return object
+
+- update.one_by_id
+  1. compose list of changes as `{column} = {new_value}` & join into comma separated string
+  2. build UPDATE...SET...WHERE query using instance table name, given changes, & given id
+  3. execute & commit query
+  4. build appropriate Data Object using query results
+  5. return object
+
+- delete.one_by_id
+  1. build `DELETE FROM {table} WHERE id = {id} RETURNING *` query from instance table name & given id
+  2. execute & commit query
+  3. build appropriate Data Object using query results
+  4. return object
+
+#### TransactionModel(ModelABC)
+
+CRUD operations on table `transaction`.
+  
+**Methods:** 
+
+- read.many_by_account
+  1. build `SELECT * FROM {table} where account_id = {id}` query from instance table name & given account id
+  2. execute & commit query
+  3. build appropriate list of Data Objects using query results
+  4. return list
+
+#### EnvelopeModel(ModelABC)
+
+CRUD operations on table `envelope`.
+  
+**Methods:** 
+
+- ready.many_by_user
+  1. build `SELECT * FROM {table} where user_id = {id}` query from instance table name & given user id
+  2. execute & commit query
+  3. build appropriate list of Data Objects using query results
+  4. return list
+
+#### UserModel(ModelABC)
+
+CRUD operations on table `user`.
+  
+**Methods:** No new behavior.
+
+#### AccountModel(ModelABC)
+
+CRUD operations on table `account`.
+  
+**Methods:** 
+
+- read.many_by_user
+  1. build `SELECT * FROM {table} where user_id = {id}` query from instance table name & given user id
+  2. execute & commit query
+  3. build appropriate list of Data Objects using query results
+  4. return list
+
+### Data Objects
+
+All methods on a given Model object return it's corresponding Data Object
+(e.g. TransactionModel.read.one_by_id returns an instance of TransactionData).
+All data objects will be inherited from Pydantic's BaseModel to perform type validation on object creation automatically.
+
+Data objects have no initializer beyond the one provided by BaseModel.
+
+#### TransactionData
+
+**Properties:**
+
+- id: a unique identifier (UUID)
+- amount: the monetary value of the transaction (Decimal)
+- payee: the person/entity the transaction was paid to/received from (str)
+- timestamp: the date & time the transaction occurred (datetime)
+- description: any extra information (str)
+- account_id: the id of the Account the Transaction belongs to (UUID)
+
+#### EnvelopeData
+
+**Properties:**
+
+- id: a unique identifier (UUID)
+- name: the name given to the Envelope (str)
+- total_funds: the total amount of funds put into the Envelope (Decimal)
+  _Note:_ this isn't the same thing as how much funds are available
+- user_id: the id of the User the Envelope belongs to (UUID)
+
+#### UserData
+
+**Properties:**
+
+- id: a unique identifier (UUID)
+- name: a unique username (str)
+- password: a hashed & salted password (str)
+
+#### AccountData
+
+**Properties:**
+
+- id: a unique identifier (UUID)
+- name: a human readable name for the account (str)
+- user_id: the id of the User who owns the Account (UUID)
+
+### Routing Objects
+
+The following objects encapsulate route handlers that will be used by the API's web server framework to respond to requests.
+
+#### RoutesABC
+
+Defines shared initializer behavior for all Routing Objects.
+
+**Initializer:**
+
+#### TransactionRoutes(RoutesABC)
+
+Encapsulates all routes under `/transaction`.
+
+**Methods:**
+
+- post_one: save given data as new Transaction  & return the resulting TransactionData object
+- get_one: fetch a TransactionData from the db by the given id
+- put_one: update the transaction that matches the given id with the given data
+- delete_one: remove the transaction with the given id from the database
+
+_**NOTE:**_ All routes under `/transaction` will be guarded by an authentication method using `FastAPI.middleware()` & a client-provided JWT.
+
+#### EnvelopeRoutes(RoutesABC)
+
+Encapsulates all routes under `/envelope`.
+
+- post_one: save given data as new Envelope belonging to user_id held in auth token & return the resulting EnvelopeData object
+- get_one: fetch a EnvelopeData from the db by the given id
+- get_many: fetch many EnvelopeData objects from the database where their user_id matches the id in the token, paginated & sorted by date in descending order
+- put_one: update the Envelope that matches the given id with the given data
+- delete_one: remove the Envelope with the given id from the database
+
+_**NOTE:**_ All routes under `/envelope` will be guarded by an authentication method using `FastAPI.middleware()` & a client-provided JWT.
+
+#### AccountRoutes(RoutesABC)
+
+Encapsulates all routes under `/account`.
+
+- post_one: save given data as new Account belonging to user_id held in auth token & return the resulting AccountData object
+- get_one: fetch a AccountData from the db by the given id
+- get_many: fetch many AccountData objects from the database where their user_id matches the id in the token, paginated & sorted by date in descending order
+- get_transactions: fetch many transactions for a given account_id, return a list of TransactionData objects, paginated & sorted by date in descending order
+
+_**NOTE:**_ All routes under `/envelope` will be guarded by an authentication method using `FastAPI.middleware()` & a client-provided JWT.
+
+#### UserRoutes(RoutesABC)
+
+Encapsulates all routes under `/user/{user_id}`.
+
+- get_accounts: get all accounts for the given user_id & return a list of AccountData objects, paginated & sorted by date in descending order by name
+- get_transactions: get all transactions for all accounts for the given user_id & return a list of TransactionData objects, paginated & sorted by date in descending order by timestamp
+- post_user: create a new User from given data & return new User's handle, full_name, & preferred_name--does not authenticate user, they will still have to log in with their newly created handle & password via `POST /authenticate`
+
+_**NOTE:**_ All routes under `/envelope` will be guarded by an authentication method using `FastAPI.middleware()` & a client-provided JWT.
+
+#### AuthenticationRoutes(RoutesABC)
+
+Encapsulates all routes under `/authenticate`.
+
+- post_auth: authenticate user with given handle & password via postgres's pgycrypto extension & return a JWT if valid, else 401
+- delete_auth: log a user out by marking the given JWT as invalid in database, return 205 to tell the client to refresh
+
+
+CSCI 23000 Skills Used
+---
+
+- Data design
+  - SQL databases
+    - ER diagrams
+    - Data normalization
+    - CRUD
+  - Data structures
+    - lists/arrays
+    - tuples
+    - dictionaries
+    - Objects (classes & instances)
+  - Object Oriented Programming
+    - Properties
+    - Methods
+    - Inheritance
+- Algorithm design
+- Web server construction
+- Data serialization (JSON)
+- Exception handling
