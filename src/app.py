@@ -3,12 +3,14 @@
 from typing import Awaitable, Callable
 
 from fastapi import FastAPI, status as http_status, Request, Response
-from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse
 
 from .config import Config
 from .database import create_client
-from .routers import status, create_transaction
+from .routers import (
+    status,
+    # create_transaction,
+)
 
 
 def create_app(config: Config = Config()) -> FastAPI:
@@ -32,11 +34,12 @@ def create_app(config: Config = Config()) -> FastAPI:
         if request.method == "POST":
             if request.headers['content-type'] != 'application/json':
                 return JSONResponse(
-                    "Request Content-Type must be application/json.", 415)
+                    "Request Content-Type must be application/json.",
+                    http_status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
         return await call_next(request)
 
     app.include_router(status)
-    app.include_router(create_transaction(database))
+    # app.include_router(create_transaction(database))
 
     return app
