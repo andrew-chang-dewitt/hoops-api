@@ -1,0 +1,17 @@
+version: "3" # this is the Docker Compose specification
+               # version, not the app stack version
+
+services:
+
+  db:
+    image: postgres:13-alpine
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: dev
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: pass # DONT DO THIS IN PROD -- acceptable in dev,
+                              # but docker secrets should be used in prod
+                              # in conjunction with docker swarm in place
+                              # of docker compose

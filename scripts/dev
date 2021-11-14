@@ -10,12 +10,20 @@ cd $current_dir
 cd ..
 
 #
-# START UP DOCKER STACK
+# START UP
 #
 
 # Uses docker-compose to start dev stack; assumes image is built.
-# docker-compose up -d
-docker-compose up
+docker-compose -f dev.docker-compose.yml up -d
+# Use uvicorn to run FastAPI application & watch for changes
+uvicorn src:app --reload
+
+#
+# TEAR DOWN
+# 
+
+# teardown dev stack
+docker-compose -f dev.docker-compose.yml down
 
 # # Handle errors in docker-compose call
 # DOCKER_UP_EXIT=$?
@@ -36,7 +44,7 @@ docker-compose up
 # # loop is pushed to the background to allow for stack logs
 # # to be pulled to the foreground in the next command
 # while sleep 1; do
-#     rg --files ./hoops | entr -d docker-compose restart app
+#     rg --files ./src | entr -d docker-compose restart app
 # done &
 # # save while loop's PID to be able to kill it later
 # WATCHER_PID=$!

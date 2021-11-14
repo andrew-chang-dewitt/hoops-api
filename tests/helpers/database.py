@@ -5,24 +5,24 @@ from unittest.mock import Mock
 
 from db_wrapper.model import (
     ModelData,
-    SyncModel,
+    AsyncModel,
 )
 
-from hoops.database import ConnectionParameters, SyncClient
+from src.database import ConnectionParameters, Client
 
 
-def mock_client() -> SyncClient:
+def mock_client() -> Client:
     """Return a mocked client instance."""
     conn_params = ConnectionParameters('a', 0, 'a', 'a', 'a')
 
-    return Mock(SyncClient(conn_params))
+    return Mock(Client(conn_params))
 
 
 AnyModelData = TypeVar('AnyModelData', bound=ModelData)
-AnySyncModel = TypeVar('AnySyncModel', bound=SyncModel[Any])
+AnyAsyncModel = TypeVar('AnyAsyncModel', bound=AsyncModel[Any])
 
 
-def mock_model(model: AnySyncModel) -> AnySyncModel:
+def mock_model(model: AnyAsyncModel) -> AnyAsyncModel:
     """Return a mocked model instance."""
     create = Mock(spec=model.create)
     read = Mock(spec=model.read)
