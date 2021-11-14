@@ -8,7 +8,7 @@
 # start by going to script dir so all movements
 # from here are relative
 SCRIPT_DIR=`dirname $(realpath "$0")`
-cd $SCRIPT_DIR
+PRJ_DIR=$SCRIPT_DIR/..
 
 
 #
@@ -16,62 +16,45 @@ cd $SCRIPT_DIR
 #
 
 function unit {
+    cd $PRJ_DIR
+    # enable app virtual environment
+    eval "$(direnv export bash)"
+    if [ !$PYTHONPATH ]; then
+        export PYTHONPATH=$PWD
+    fi
     echo ""
-    echo "Unit tests not implemented."
+
     echo ""
-    unit_result=0
+    echo "Starting unit tests..."
+    echo ""
 
-    # cd ..
-    # # enable app virtual environment
-    # eval "$(direnv export bash)"
-    # if [ !$PYTHONPATH ]; then
-    #     export PYTHONPATH=$PWD
-    # fi
-    # echo ""
-
-    # echo ""
-    # echo "Starting unit tests..."
-    # echo ""
-
-    # # run unit tests & save exit code
-    # cd test
-    # python -m unittest -b $@
-    # # save exit code from tests
-    # unit_result=$?
-
-    # # return to scripts directory
-    # cd $SCRIPT_DIR
-    # echo ""
+    # run unit tests & save exit code
+    cd $PRJ_DIR/tests/unit
+    python -m unittest -b $@
+    # save exit code from tests
+    unit_result=$?
+    echo ""
 }
 
 function e2e {
+    cd $PRJ_DIR
+    # enable app virtual environment
+    eval "$(direnv export bash)"
+    if [ !$PYTHONPATH ]; then
+        export PYTHONPATH=$PWD
+    fi
     echo ""
-    echo "Integration tests not implemented."
+
     echo ""
-    e2e_result=0
+    echo "Starting integration tests..."
+    echo ""
 
-    # echo ""
-    # echo "Starting integration tests..."
-    # echo ""
-    # # go to test app dir
-    # cd ../integration_test
-
-    # # enable app virtual environment
-    # eval "$(direnv export bash)"
-    # if [ !$PYTHONPATH ]; then
-    #     export PYTHONPATH=$PWD
-    # fi
-    # echo ""
-
-    # # run integration tests & save exit code
-    # cd test
-    # python -m unittest -b $@
-    # # save exit code from tests
-    # e2e_result=$?
-
-    # # return to scripts directory
-    # cd $SCRIPT_DIR
-    # echo ""
+    # run unit tests & save exit code
+    cd $PRJ_DIR/tests/integration
+    python -m unittest -b $@
+    # save exit code from tests
+    e2e_result=$?
+    echo ""
 }
 
 # Run unit tests or integration tests if one is specified

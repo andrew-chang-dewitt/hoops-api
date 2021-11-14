@@ -10,16 +10,19 @@
 SCRIPT_DIR=`dirname $(realpath "$0")`
 cd $SCRIPT_DIR
 
-# go to app dir
-cd ..
 
+#
+# DEFER TO MANAGE SCRIPT
+#
+
+cd ..
 # enable app virtual environment
 eval "$(direnv export bash)"
+if [ !$PYTHONPATH ]; then
+    export PYTHONPATH=$PWD
+fi
+echo ""
 
-#
-# RUN AUTOFIXER
-#
+echo "Called with $@"
 
-echo "Applying PEP 8 fixes..."
-autopep8 --in-place -r src tests
-echo "Done."
+python manage.py "$@"

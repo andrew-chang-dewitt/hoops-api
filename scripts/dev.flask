@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 #
 # NAVIGATE TO CORRECT DIRECTORY
 #
@@ -9,17 +8,10 @@
 # from here are relative
 SCRIPT_DIR=`dirname $(realpath "$0")`
 cd $SCRIPT_DIR
+cd ../hoops
 
-# go to app dir
-cd ..
+export FLASK_ENV=DEVELOPMENT
+# use debugger to autorestart on file change
+export FLASK_DEBUG=1
 
-# enable app virtual environment
-eval "$(direnv export bash)"
-
-#
-# RUN AUTOFIXER
-#
-
-echo "Applying PEP 8 fixes..."
-autopep8 --in-place -r src tests
-echo "Done."
+python -m flask run
