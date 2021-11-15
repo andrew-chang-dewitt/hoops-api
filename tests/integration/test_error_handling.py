@@ -14,6 +14,7 @@ from unittest import main, IsolatedAsyncioTestCase as TestCase
 # external test dependencies
 from asgi_lifespan import LifespanManager
 from db_wrapper.model import sql
+from db_wrapper.model.base import NoResultFound
 from fastapi import FastAPI
 from httpx import AsyncClient
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
@@ -155,6 +156,19 @@ class TestErrorCodes(TestCase):
                 json={'data': "isn't a transaction"})
 
         self.assertEqual(422, response.status_code)
+
+    async def test_no_result_in_database(self) -> None:
+        """Responds 404 when no result is found for DB query."""
+        async def raise_no_result() -> None:
+            raise NoResultFound()
+
+        async with get_test_client(
+                self.app_getter('/', raise_no_result)
+        ) as clients:
+            client, _ = clients
+            response = await client.post('/', json={})
+
+        self.assertEqual(404, response.status_code)
 
 
 if __name__ == "__main__":
