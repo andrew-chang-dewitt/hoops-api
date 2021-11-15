@@ -1,7 +1,7 @@
 """Data model objects."""
 
-from .transaction import (
-    TransactionModel,
-    TransactionBase,
-    TransactionDB
-)
+# from .transaction import (
+#     TransactionModel,
+#     TransactionBase,
+#     TransactionDB
+# )
