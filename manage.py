@@ -158,9 +158,9 @@ def _load_from_app(session: S) -> None:
     """
     Load schema from application source.
 
-    Uses all .sql files stored at ./hoops/models/**
+    Uses all .sql files stored at ./src/models/**
     """
-    load_sql_from_folder(session, f'{PRJ_DIR}/hoops/models')
+    load_sql_from_folder(session, f'{PRJ_DIR}/src/models')
 
 
 @contextmanager

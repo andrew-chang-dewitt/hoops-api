@@ -9,6 +9,8 @@ from .config import Config
 from .database import create_client, NoResultFound
 from .routers import (
     status,
+    create_user,
+    create_token,
     # create_transaction,
 )
 
@@ -31,7 +33,7 @@ def create_app(config: Config = Config()) -> FastAPI:
         req: Request,
         call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
-        if req.method == "POST":
+        if req.method == "POST" and req.url.path[:6] != "/token":
             if req.headers['content-type'] != 'application/json':
                 return JSONResponse(
                     "Request Content-Type must be application/json.",
@@ -53,12 +55,15 @@ def create_app(config: Config = Config()) -> FastAPI:
                     'method': req.method,
                     'headers': str(req.headers),
                     'query_parameters': str(req.query_params),
-                    'body': await req.json(),
+                    # json decoder breaks on empty body
+                    'body': await req.json() if await req.body() else None,
                 }
             }
         )
 
     app.include_router(status)
+    app.include_router(create_user(database))
+    app.include_router(create_token(database))
     # app.include_router(create_transaction(database))
 
     return app
