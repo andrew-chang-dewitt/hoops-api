@@ -6,6 +6,7 @@
 #     TransactionDB
 # )
 from .user import (
+    UserChanges,
     UserIn,
     UserOut,
     UserModel
