@@ -116,7 +116,7 @@ class UserReader(AsyncRead[UserOut]):
 class UserUpdater(AsyncUpdate[UserOut]):
     """Extended Updater for UserModel."""
 
-    async def one_by_id(self, _: UUID, __: Dict[str, Any]) -> UserOut:
+    async def one_by_id(self, _: str, __: Dict[str, Any]) -> UserOut:
         """Un-implemented to force use of update.changes method."""
         raise NotImplementedError()
 
