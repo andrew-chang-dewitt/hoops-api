@@ -10,53 +10,33 @@ cd $current_dir
 cd ..
 
 #
-# START UP
+# FUNCTIONS
+# 
+
+function stack_up {
+    # Uses docker-compose to start dev stack; assumes image is built.
+    docker-compose -f $1 up ${@:2}
+}
+
+function stack_down {
+    # tear down given docker-compose stack
+    # only needed if stack was started in detached mode using `-d`
+    docker-compose -f $1 down
+}
+
+#
+# RUN SCRIPT
 #
 
-# Uses docker-compose to start dev stack; assumes image is built.
-docker-compose -f dev.docker-compose.yml up -d
-# Use uvicorn to run FastAPI application & watch for changes
-uvicorn src:app --reload
+dev_stack="./dev.docker-compose.yml"
+test_stack="./tests/integration/test.docker-compose.yml"
 
-#
-# TEAR DOWN
-# 
-
-# teardown dev stack
-docker-compose -f dev.docker-compose.yml down
-
-# # Handle errors in docker-compose call
-# DOCKER_UP_EXIT=$?
-# 
-# if [ $DOCKER_UP_EXIT != 0 ] ; then
-#     echo "It's possible you haven't built the application image yet, try running ./scripts/build, then run ./scripts/dev again."
-# 
-#     exit $DOCKER_UP_EXIT
-# fi
-# 
-# #
-# # START WATCHER
-# #
-# 
-# # Use entr to watch a list of files, get the list by running
-# # rg in a loop, then restart if any file changes or new file
-# # is added to the watched dir
-# # loop is pushed to the background to allow for stack logs
-# # to be pulled to the foreground in the next command
-# while sleep 1; do
-#     rg --files ./src | entr -d docker-compose restart app
-# done &
-# # save while loop's PID to be able to kill it later
-# WATCHER_PID=$!
-# 
-# # Return to log output
-# docker-compose logs --follow
-# 
-# #
-# # STOP SCRIPT
-# #
-# 
-# # kill while loop
-# kill $WATCHER_PID
-# # teardown dev stack
-# docker-compose down
+if [[ $1 = "test" || $1 = "t" ]]; then
+    # only needs the db; test runner creates app for testing as needed
+    stack_up $test_stack
+else
+    stack_up $dev_stack -d
+    # Use uvicorn to run FastAPI application & watch for changes
+    uvicorn src:app --reload
+    stack_down $dev_stack
+fi
