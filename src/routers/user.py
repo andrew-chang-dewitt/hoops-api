@@ -60,20 +60,37 @@ def create_user(database: Client) -> APIRouter:
     model = Model(database)
     routes = UserRoutes(model)
 
-    user = APIRouter(prefix="/user")
+    user = APIRouter(prefix="/user", tags=["User"])
 
     user.post(
         "/",
         status_code=status_code.HTTP_201_CREATED,
-        response_model=UserOut
+        response_model=UserOut,
+        summary="Create a new User."
     )(routes.post_user)
 
-    user.get("/", response_model=UserOut)(routes.get_user)
+    user.get(
+        "/",
+        response_model=UserOut,
+        summary="Get the currently authenticated User."
+    )(routes.get_user)
 
-    user.put("/", response_model=UserOut)(routes.put_user)
+    user.put(
+        "/",
+        response_model=UserOut,
+        summary="Update the currently authenticated User's information."
+    )(routes.put_user)
 
-    user.put("/password", response_model=UserOut)(routes.put_password)
+    user.put(
+        "/password",
+        response_model=UserOut,
+        summary="Update the currently authenticated User's password."
+    )(routes.put_password)
 
-    user.delete("/", response_model=UserOut)(routes.delete_user)
+    user.delete(
+        "/",
+        response_model=UserOut,
+        summary="Delete the currently authenticated User."
+    )(routes.delete_user)
 
     return user

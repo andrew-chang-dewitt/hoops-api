@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 import os
-from typing import cast, Dict
+from typing import Callable, Protocol
 from uuid import UUID
 
 from dotenv import load_dotenv
@@ -30,25 +30,33 @@ class CredentialsException(HTTPException):
         )
 
 
-def encode_token(user_id: UUID) -> str:
+class Payload(Protocol):
+    """Decoded JWT payload interface."""
+
+    def get(self, field_name: str) -> str: ...
+
+
+def encode_token(
+    user_id: UUID,
+    encoder: Callable[..., str] = jwt.encode
+) -> str:
     """Encode & return a new JWT containing the given ID."""
     data = {
         "sub": str(user_id),
         "exp": datetime.utcnow() + timedelta(minutes=TOKEN_EXPIRE_MINUTES)
     }
 
-    # FIXME: python-jose has no typing & jwt.encode returns Any
-    # casting to str to allow typing downstream for now instead of
-    # creating stubs, see https://github.com/mpdavis/python-jose/pull/265
-    # for open PR that adds typing
-    token = jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
-    return cast(str, token)
+    return encoder(data, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def get_active_user(token: str = Depends(oauth2_scheme)) -> UUID:
+def get_active_user(
+    token: str = Depends(oauth2_scheme),
+    decoder: Callable[..., Payload] = jwt.decode
+) -> UUID:
     """Get current user ID from token."""
+    print("using actual get_active_user method on token:", token)
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = decoder(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
 
         if user_id is None:

@@ -6,11 +6,17 @@ from unittest import main, IsolatedAsyncioTestCase as TestCase
 from db_wrapper.model import sql
 
 # internal test dependencies
-from tests.helpers.application import get_test_client
+from tests.helpers.application import (
+    get_test_client,
+    get_fake_auth_token,
+    mock_get_active_user
+)
+
+from src.security import get_active_user
 
 
-class TestRoutePost(TestCase):
-    """Testing HTTP Status Codes returned."""
+class TestRoutePostRoot(TestCase):
+    """Tests for `POST /user/`."""
 
     async def test_valid_request(self) -> None:
         """Testing a valid request's response."""
@@ -79,6 +85,64 @@ class TestRoutePost(TestCase):
                         msg="Given password is encrypted before storing."):
                     self.assertNotEqual(
                         result["password"], new_user["password"])
+
+
+class TestRouteGetRoot(TestCase):
+    """Tests for `GET /user/`."""
+
+    async def test_valid_request(self) -> None:
+        """Testing a valid request's response."""
+        query = """
+            INSERT INTO
+                hoops_user(handle, full_name, preferred_name, password)
+            VALUES
+                ('user', 'A Full Name', 'Nickname', '@ new p4s5w0rd')
+            RETURNING id;
+        """
+
+        async with get_test_client(
+            dependency_overrides={get_active_user: mock_get_active_user}
+        ) as clients:
+            client, database = clients
+
+            await database.connect()
+            result = await database.execute_and_return(query)
+            await database.disconnect()
+
+            user_id = result[0]["id"]
+            token = get_fake_auth_token(user_id)
+
+            response = await client.get(
+                "/user/",
+                headers={"accept": "application/json", "Authorization": token})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            with self.subTest(
+                msg="Responds with Content-Type: application/json Header."
+            ):
+                self.assertEqual(response.headers.get(
+                    'content-type'), 'application/json')
+
+            with self.subTest(
+                    msg="Responds with authorized User's data."):
+                body = response.json()
+
+                with self.subTest():
+                    self.assertEqual(body["id"], str(user_id))
+                with self.subTest():
+                    self.assertEqual(body['handle'], "user")
+                with self.subTest():
+                    self.assertEqual(body['full_name'], "A Full Name")
+                with self.subTest():
+                    self.assertEqual(body['preferred_name'], "Nickname")
+
+            with self.subTest(
+                    msg="Response doesn't include the User's password."):
+                with self.assertRaises(KeyError):
+                    body["password"]  # pylint: disable=pointless-statement
 
 
 if __name__ == "__main__":

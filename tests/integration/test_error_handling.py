@@ -1,12 +1,16 @@
 """Tests for common error handling across all routes."""
 
 from unittest import main, IsolatedAsyncioTestCase as TestCase
+from uuid import UUID
 
 # external test dependencies
+from fastapi import Depends
 from db_wrapper.model.base import NoResultFound
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 # internal test dependencies
 from tests.helpers.application import get_test_app, get_test_client
+
+from src.security import get_active_user
 
 
 class TestErrorCodes(TestCase):
@@ -37,12 +41,12 @@ class TestErrorCodes(TestCase):
             return body_arg
 
         async with get_test_client(
-                get_test_app([('post', '/', test_handler)])
+                get_test_app([('post', '/fake_route', test_handler)])
         ) as clients:
             client, _ = clients
 
             response = await client.post(
-                '/',
+                '/fake_route',
                 json={'data': "isn't a transaction"})
 
         self.assertEqual(422, response.status_code)
@@ -53,12 +57,26 @@ class TestErrorCodes(TestCase):
             raise NoResultFound()
 
         async with get_test_client(
-                get_test_app([('get', '/', raise_no_result)])
+                get_test_app([('get', '/fake_route', raise_no_result)])
         ) as clients:
             client, _ = clients
-            response = await client.get('/')
+            response = await client.get('/fake_route')
 
         self.assertEqual(404, response.status_code)
+
+    async def test_unauthenticated_request_to_protected_route(self) -> None:
+        """Responds 401 when unauthenticated request is received."""
+        async def protected_route(
+                user_id: UUID = Depends(get_active_user)) -> UUID:
+            return user_id
+
+        async with get_test_client(
+                get_test_app([('get', '/fake_route', protected_route)])
+        ) as clients:
+            client, _ = clients
+            response = await client.get('/fake_route')
+
+        self.assertEqual(401, response.status_code)
 
 
 if __name__ == "__main__":

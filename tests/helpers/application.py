@@ -4,13 +4,15 @@ from typing import (
     AsyncGenerator,
     Awaitable,
     Callable,
+    Dict,
     List,
     Optional,
     Tuple,
 )
+from uuid import UUID
 
 from asgi_lifespan import LifespanManager
-from fastapi import FastAPI
+from fastapi import FastAPI, Header
 from httpx import AsyncClient
 
 from tests.helpers.database import get_test_db
@@ -49,13 +51,29 @@ def get_test_app(
     return getter
 
 
+def get_fake_auth_token(user_id: UUID) -> str:
+    """'Encode' a user_id into a fake JWT & return it."""
+    return f"Bearer {str(user_id)}"
+
+
+async def mock_get_active_user(authorization: str = Header(None)) -> UUID:
+    """Mock src.security.get_active_user."""
+    token = authorization[7:]
+    print("getting user from mock token:", token)
+    return UUID(token)
+
+
 @asynccontextmanager
 async def get_test_client(
-    getter: Callable[..., Awaitable[Tuple[FastAPI, Client]]] = get_test_app([])
-) -> AsyncGenerator[
-        Tuple[AsyncClient, Client], None]:
+    getter: Callable[..., Awaitable[Tuple[FastAPI, Client]]] = get_test_app([
+    ]),
+    dependency_overrides: Dict[Any, Any] = {}
+) -> AsyncGenerator[Tuple[AsyncClient, Client], None]:
     """Create test client for application with lifecycle events."""
     app, database = await getter()
+
+    for actual, mock in dependency_overrides.items():
+        app.dependency_overrides[actual] = mock
 
     async with AsyncClient(
         app=app, base_url=BASE_URL
