@@ -11,6 +11,7 @@ from .routers import (
     status,
     create_user,
     create_token,
+    create_account,
     # create_transaction,
 )
 
@@ -64,6 +65,7 @@ def create_app(config: Config = Config()) -> FastAPI:
     app.include_router(status)
     app.include_router(create_user(database))
     app.include_router(create_token(database))
+    app.include_router(create_account(database))
     # app.include_router(create_transaction(database))
 
     return app
