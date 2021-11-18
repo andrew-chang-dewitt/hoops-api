@@ -15,9 +15,15 @@ class Status(BaseModel):
 
 # @app.get("/")
 async def root() -> Status:
+    """Check API status."""
     return Status(
         message="The API is up.",
         ok=True)
 
-status = APIRouter(prefix="/status")
-status.add_api_route("/", root, methods=["GET"], response_model=Status)
+status = APIRouter(tags=["API Status"])
+status.add_api_route(
+    "/",
+    root,
+    methods=["GET"],
+    response_model=Status,
+    summary="Check API status.")

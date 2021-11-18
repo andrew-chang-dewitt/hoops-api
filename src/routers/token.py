@@ -39,11 +39,6 @@ class TokenRoutes:  # pylint: disable=R0903
 
         return Token(access_token=token)
 
-        # check token Dependency?
-        # FIXME: maybe this goes in another file & Token models go elsewhere too?
-        # decode token
-        # return payload
-
 
 def create_token(database: Client) -> APIRouter:
     """Create a token router & model with access to the given database."""
@@ -51,12 +46,13 @@ def create_token(database: Client) -> APIRouter:
     model = Model(database)
     # set up token router
     routes = TokenRoutes(model)
-    token = APIRouter(prefix="/token")
+    token = APIRouter(prefix="/token", tags=["Authentication"])
 
     # add post_token route
     token.post(
         "/",
-        response_model=Token
+        response_model=Token,
+        summary="Get an authentication Token via an OAuth2 Request Form."
     )(routes.post)
 
     # return router
