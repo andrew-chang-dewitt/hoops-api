@@ -40,6 +40,12 @@ class UserChanges(BaseModel):  # pylint: disable=R0903
     full_name: Optional[str]
     preferred_name: Optional[str]
 
+    class Config:
+        """Configure UserChanges Pydantic features."""
+
+        # will now throw validation error if extra fields are given
+        extra = "forbid"
+
 
 class UserOut(UserBase, ModelData):  # pylint: disable=R0903
     """Fields returned by queries on User Model."""
