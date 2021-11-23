@@ -208,14 +208,19 @@ def sync(args: List[str], config: Config = Config()) -> None:
     """
     # define if prompts are needed or not
     no_prompt = False
+    # define if output should be printed
+    log = True
 
     if 'noprompt' in args:
         no_prompt = True
+    if 'silent' in args:
+        log = False
 
     # create temp database for app schema
     with _temp_db(config) as temp_db_url:
-        print(f'db url: {config.url}')
-        print(f'temp url: {temp_db_url}')
+        if log:
+            print(f'db url: {config.url}')
+            print(f'temp url: {temp_db_url}')
 
         # create sessions for current db state & target schema
         with S(config.url) as from_schema_session, \
@@ -232,23 +237,32 @@ def sync(args: List[str], config: Config = Config()) -> None:
 
             # handle changes
             if migration.statements:
-                print('\nTHE FOLLOWING CHANGES ARE PENDING:', end='\n\n')
-                print(migration.sql)
+                if log:
+                    print('\nTHE FOLLOWING CHANGES ARE PENDING:', end='\n\n')
+                    print(migration.sql)
 
                 if no_prompt:
-                    print('Applying...')
+                    if log:
+                        print('Applying...')
+
                     migration.apply()
-                    print('Changes applied.')
+
+                    if log:
+                        print('Changes applied.')
                 else:
                     if _prompt('Apply these changes?'):
-                        print('Applying...')
+                        if log:
+                            print('Applying...')
                         migration.apply()
-                        print('Changes applied.')
+                        if log:
+                            print('Changes applied.')
                     else:
-                        print('Not applying.')
+                        if log:
+                            print('Not applying.')
 
             else:
-                print('Already synced.')
+                if log:
+                    print('Already synced.')
 
 
 def pending(_: List[str], config: Config = Config()) -> None:

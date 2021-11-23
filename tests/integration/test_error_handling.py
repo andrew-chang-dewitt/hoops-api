@@ -1,16 +1,19 @@
 """Tests for common error handling across all routes."""
 
+from typing import Tuple
 from unittest import main, IsolatedAsyncioTestCase as TestCase
 from uuid import UUID
 
 # external test dependencies
-from fastapi import Depends
+from fastapi import Depends, FastAPI
+from db_wrapper import AsyncClient as Client
 from db_wrapper.model.base import NoResultFound
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 # internal test dependencies
-from tests.helpers.application import get_test_app, get_test_client
+from tests.helpers.application import FAKE_KEY, get_test_app, get_test_client
+from tests.helpers.database import get_test_db
 
-from src.security import get_active_user
+from src.security import create_auth_dep
 
 
 class TestErrorCodes(TestCase):
@@ -66,12 +69,18 @@ class TestErrorCodes(TestCase):
 
     async def test_unauthenticated_request_to_protected_route(self) -> None:
         """Responds 401 when unauthenticated request is received."""
-        async def protected_route(
-                user_id: UUID = Depends(get_active_user)) -> UUID:
-            return user_id
+        async def get_protected_test_app() -> Tuple[FastAPI, Client]:
+            test_app, test_db = (await get_test_app([])())
+
+            @test_app.get('/fake_route')
+            async def protected_route(user_id: UUID = Depends(
+                    create_auth_dep(test_db, FAKE_KEY))) -> UUID:
+                return user_id
+
+            return test_app, test_db
 
         async with get_test_client(
-                get_test_app([('get', '/fake_route', protected_route)])
+                get_protected_test_app
         ) as clients:
             client, _ = clients
             response = await client.get('/fake_route')

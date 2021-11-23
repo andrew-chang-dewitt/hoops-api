@@ -85,6 +85,6 @@ async def get_test_db() -> Tuple[ConnectionParameters, Client]:
 
     # rebuild database from app model schema
     config = ManageConfig(user, password, host, port, database)
-    sync(['noprompt'], config)
+    sync(['silent', 'noprompt'], config)
 
     return test_db_params, test_client

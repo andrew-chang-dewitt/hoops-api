@@ -1,18 +1,19 @@
 """Security constants & methods."""
 
 from datetime import datetime, timedelta
-import os
-from typing import Callable, Protocol
+from typing import Any, Awaitable, Callable, Protocol
 from uuid import UUID
 
-from dotenv import load_dotenv
+from db_wrapper.model.base import NoResultFound
 from fastapi import status as status_code, Depends
 from fastapi.exceptions import HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 
-load_dotenv(".secrets")
-SECRET_KEY = os.getenv("APP_KEY")
+from src.database import Client
+from src.models import UserModel
+
+
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_MINUTES = 30
 
@@ -30,15 +31,9 @@ class CredentialsException(HTTPException):
         )
 
 
-class Payload(Protocol):
-    """Decoded JWT payload interface."""
-
-    def get(self, field_name: str) -> str: ...
-
-
 def encode_token(
     user_id: UUID,
-    encoder: Callable[..., str] = jwt.encode
+    key: str,
 ) -> str:
     """Encode & return a new JWT containing the given ID."""
     data = {
@@ -46,22 +41,34 @@ def encode_token(
         "exp": datetime.utcnow() + timedelta(minutes=TOKEN_EXPIRE_MINUTES)
     }
 
-    return encoder(data, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(data, key, algorithm=ALGORITHM)  # type: ignore
 
 
-def get_active_user(
-    token: str = Depends(oauth2_scheme),
-    decoder: Callable[..., Payload] = jwt.decode
-) -> UUID:
-    """Get current user ID from token."""
-    print("using actual get_active_user method on token:", token)
-    try:
-        payload = decoder(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("sub")
+def create_auth_dep(
+    database: Client,
+    key: str,
+) -> Callable[[str], Awaitable[UUID]]:
+    async def auth_user(
+        token: str = Depends(oauth2_scheme)
+    ) -> UUID:
+        """Get current user ID from token."""
+        try:
+            payload = jwt.decode(token, key, algorithms=[ALGORITHM])
+            id_str = payload.get("sub")
 
-        if user_id is None:
+            if id_str is None:
+                raise CredentialsException()
+        except JWTError as err:
+            raise CredentialsException() from err
+
+        user_id = UUID(id_str)
+        user_model = UserModel(database)
+
+        try:
+            await user_model.read.one_by_id(user_id)
+        except NoResultFound:
             raise CredentialsException()
-    except JWTError as err:
-        raise CredentialsException() from err
 
-    return UUID(user_id)
+        return user_id
+
+    return auth_user
