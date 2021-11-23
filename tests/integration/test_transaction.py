@@ -15,6 +15,8 @@ from tests.helpers.application import (
 )
 from src.database import Client
 
+BASE_URL = "/transaction"
+
 
 async def setup_user(database: Client) -> Tuple[UUID, UUID]:
     """Sets up database with 2 users for testing."""
@@ -68,16 +70,8 @@ class TestRoutePostRoot(TestCase):
             user_id = (await setup_user(database))[0]
             account_id = await setup_account(database, user_id)
 
-            new_transaction = {
-                "amount": 1.23,
-                "description": "a description",
-                "payee": "payee",
-                "timestamp": "2019-12-10T08:12-05:00",
-                "account_id": str(account_id),
-            }
-
             response = await client.post(
-                "/transaction",
+                BASE_URL,
                 headers={
                     **get_token_header(user_id),
                     "accept": "application/json"},
@@ -150,6 +144,149 @@ class TestRoutePostRoot(TestCase):
                     self.assertEqual(
                         result["account_id"],
                         UUID(new_transaction["account_id"]))
+
+    async def test_cant_create_transactions_if_not_own_account(self) -> None:
+        """Return 401 attempting to create transaction for other account."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            user_id, other_user = (await setup_user(database))
+            other_account = await setup_account(database, other_user)
+
+            new_transaction = {
+                "amount": 1.23,
+                "description": "a description",
+                "payee": "payee",
+                "timestamp": "2019-12-10T08:12-05:00",
+                "account_id": str(other_account),
+            }
+
+            response = await client.post(
+                BASE_URL,
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"},
+                json=new_transaction)
+
+            self.assertEqual(401, response.status_code)
+
+
+class TestRouteGetRoot(TestCase):
+    """Tests for `GET /transaction`."""
+
+    async def test_valid_request(self) -> None:
+        """Testing a valid request's response."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            # insert some test transactions
+            user_id = (await setup_user(database))[0]
+            account_id = await setup_account(database, user_id)
+            query = sql.SQL("""
+                INSERT INTO
+                    transaction(amount, payee, description,
+                                timestamp, account_id)
+                VALUES
+                    (1.23, 'a payee', 'a description',
+                     {timestamp1}, {account_id}),
+                    (1.23, 'a payee', 'a description',
+                     {timestamp2}, {account_id}),
+                    (1.23, 'a payee', 'a description',
+                     {timestamp3}, {account_id});
+            """).format(
+                account_id=sql.Literal(account_id),
+                timestamp1=sql.Literal("2019-12-10T08:12-05:00"),
+                timestamp2=sql.Literal("2019-12-10T09:12-05:00"),
+                timestamp3=sql.Literal("2019-12-11T06:12-05:00"),
+            )
+            await database.connect()
+            await database.execute(query)
+            await database.disconnect()
+
+            response = await client.get(
+                BASE_URL,
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            with self.subTest(msg="All objects returned are Transactions."):
+                for item in response.json():
+                    with self.subTest(msg="Amount is float"):
+                        self.assertTrue(isinstance(item["amount"], float))
+                    with self.subTest(msg="Payee is string"):
+                        self.assertTrue(isinstance(item["payee"], str))
+                    with self.subTest(msg="Description is string"):
+                        self.assertTrue(isinstance(item["description"], str))
+                    with self.subTest(msg="Timestamp is ISO Datetime"):
+                        self.assertTrue(
+                            datetime.fromisoformat(item["timestamp"]))
+                    with self.subTest(msg="Account ID is UUID"):
+                        self.assertTrue(UUID(item["account_id"]))
+
+
+class TestRoutePutRoot(TestCase):
+    """Tests for `PUT /transaction`."""
+
+    async def test_valid_request(self) -> None:
+        """Testing a valid request's response."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            # insert some test transactions
+            user_id = (await setup_user(database))[0]
+            account_id = await setup_account(database, user_id)
+            query = sql.SQL("""
+                INSERT INTO
+                    transaction(amount, payee, description, timestamp, account_id)
+                VALUES
+                    (1.23, 'a payee', 'a description', {timestamp1}, {account_id})
+                RETURNING id;
+            """).format(
+                account_id=sql.Literal(account_id),
+                timestamp1=sql.Literal("2019-12-10T08:12-05:00"),
+            )
+            await database.connect()
+            tran_id = (await database.execute_and_return(query))[0]["id"]
+            await database.disconnect()
+
+            changes = {
+                "description": "something new",
+            }
+
+            response = await client.put(
+                f"{BASE_URL}/{tran_id}",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"},
+                json=changes)
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            # with self.subTest(
+            #         msg="Returns the updated transaction."):
+            #     body = response.json()
+
+            #     self.assertEqual(body["description"], changes["description"])
+
+            # with self.subTest(msg="Updates the database."):
+            #     new_id = UUID(body["id"])
+
+            #     await database.connect()
+            #     query_result = await database.execute_and_return(sql.SQL("""
+            #         SELECT * FROM transaction
+            #         WHERE id = {new_id};
+            #     """).format(new_id=sql.Literal(new_id)))
+            #     await database.disconnect()
+
+            #     result = query_result[0]
+
+            #     self.assertEqual(result["description"], changes["description"])
 
 
 if __name__ == "__main__":
