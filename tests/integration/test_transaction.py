@@ -1,187 +1,155 @@
-"""Tests for routes @ `/transaction`."""
+"""Tests for /user routes."""
 
-from contextlib import asynccontextmanager
 from datetime import datetime
 from decimal import Decimal
-from typing import AsyncGenerator, Optional, Tuple
-from unittest import main, IsolatedAsyncioTestCase as TestCase
+from typing import Dict, List, Optional, Tuple
 from uuid import UUID
+from unittest import main, IsolatedAsyncioTestCase as TestCase
 
-# external test dependencies
 from db_wrapper.model import sql
-from fastapi import FastAPI
-from asgi_lifespan import LifespanManager
-from httpx import AsyncClient
-from manage import sync, Config as ManageConfig
 
-# module under test
-from src import create_app
-# internal module dependencies
-from src.config import Config as AppConfig
-from src.database import Client, ConnectionParameters
+# internal test dependencies
+from tests.helpers.application import (
+    get_test_client,
+    get_token_header,
+)
+from src.database import Client
 
 
-BASE_URL = "http://localhost:8000"
+async def setup_user(database: Client) -> Tuple[UUID, UUID]:
+    """Sets up database with 2 users for testing."""
+    query = """
+        INSERT INTO
+            hoops_user(handle, full_name, preferred_name, password)
+        VALUES
+            ('user', 'A Full Name', 'Nickname', '@ new p4s5w0rd'),
+            ('other', 'Other', 'Other', 'other')
+        RETURNING id;
+    """
+
+    await database.connect()
+    result: List[Dict[str, UUID]] = await database.execute_and_return(query)
+    await database.disconnect()
+
+    return result[0]["id"], result[1]["id"]
 
 
-async def clear_test_db(
-    db_client: Client,
-    config: ConnectionParameters
-) -> None:
-    """Drop all public in given database client."""
+async def setup_account(
+    database: Client,
+    user_id: Optional[UUID] = None
+) -> UUID:
+    """Sets up database with 1 account for given user for testing."""
+    if not user_id:
+        user_id = (await setup_user(database))[0]
+
     query = sql.SQL("""
-        DROP SCHEMA public CASCADE;
-        CREATE SCHEMA public;
-        GRANT ALL ON SCHEMA public TO {user};
-        GRANT ALL ON SCHEMA public TO public;
-        COMMENT ON SCHEMA public IS 'standard public schema';
-    """).format(user=sql.Identifier(config.user))
+        INSERT INTO account(user_id, name)
+        VALUES ({user_id}, {name})
+        RETURNING id;
+    """).format(
+        user_id=sql.Literal(user_id),
+        name=sql.Literal("an account"))
 
-    await db_client.connect()
-    await db_client.execute(query)
-    await db_client.disconnect()
+    await database.connect()
+    result: List[Dict[str, UUID]] = await database.execute_and_return(query)
+    await database.disconnect()
 
-
-async def get_test_db() -> Tuple[ConnectionParameters, Client]:
-    """Create database client & return it."""
-    # test database connection data
-    user = 'test'
-    password = 'pass'
-    host = 'localhost'
-    port = 9432
-    database = 'test'
-
-    # create app database client
-    test_db_params = ConnectionParameters(host, port, user, password, database)
-    test_client = Client(test_db_params)
-
-    # drop any existing test tables
-    await clear_test_db(test_client, test_db_params)
-
-    # rebuild database from app model schema
-    config = ManageConfig(user, password, host, port, database)
-    sync(['noprompt'], config)
-
-    return test_db_params, test_client
+    return result[0]["id"]
 
 
-async def get_test_app(
-    database: Optional[ConnectionParameters] = None
-) -> Tuple[FastAPI, Client]:
-    """Create an application instance configured for testing."""
-    if database is None:
-        db_config, db_client = await get_test_db()
-
-    test_config = AppConfig(
-        database=db_config)
-    return create_app(test_config), db_client
-
-
-@asynccontextmanager
-async def get_test_client() -> AsyncGenerator[
-        Tuple[AsyncClient, Client], None]:
-    """Create test client for application with lifecycle events."""
-    app, database = await get_test_app()
-
-    async with AsyncClient(
-        app=app, base_url=BASE_URL
-    ) as test_client, LifespanManager(app):
-        yield test_client, database
-
-
-class TestRoutePostOne(TestCase):
-    """Tests for `POST /transaction/one`."""
+class TestRoutePostRoot(TestCase):
+    """Tests for `POST /transaction`."""
 
     async def test_valid_request(self) -> None:
         """Testing a valid request's response."""
         async with get_test_client() as clients:
             client, database = clients
 
-            response = await client.post(
-                '/transaction/one',
-                json={
-                    "amount": "1.00",
-                    "description": "a description",
-                    "payee": "a payee",
-                    "timestamp": "2019-12-10T08:12-05:00"})
+            user_id = (await setup_user(database))[0]
+            account_id = await setup_account(database, user_id)
 
-        with self.subTest(
-                msg="Responds with status code of 201 Created."):
-            self.assertEqual(201, response.status_code)
-
-        with self.subTest(
-                msg="Responds with Content-Type: application/json Header."):
-            self.assertEqual(response.headers.get(
-                'content-type'), 'application/json')
-
-        with self.subTest(
-                msg="Responds with newly created Transaction."):
-            body = response.json()
-
-            with self.subTest():
-                # UUID() will throw an error if body["id"] isn't an id
-                self.assertTrue(UUID(body["id"]))
-            with self.subTest():
-                self.assertEqual(body['amount'], 1.0)
-            with self.subTest():
-                self.assertEqual(body['description'], "a description")
-            with self.subTest():
-                self.assertEqual(body['payee'], "a payee")
-            with self.subTest():
-                self.assertEqual(body['timestamp'],
-                                 "2019-12-10T13:12:00+00:00")
-
-        with self.subTest(
-                msg="New transaction is in database."):
-            body = response.json()
-            new_id = UUID(body["id"])
-
-            await database.connect()
-            query_result = await database.execute_and_return(sql.SQL("""
-                SELECT * FROM transaction
-                WHERE id = {tran_id};
-                """).format(tran_id=sql.Literal(new_id)))
-            await database.disconnect()
-
-            result = query_result[0]
-
-            with self.subTest():
-                self.assertEqual(result["id"], new_id)
-            with self.subTest():
-                self.assertEqual(result['amount'], Decimal("1.00"))
-            with self.subTest():
-                self.assertEqual(result['description'], "a description")
-            with self.subTest():
-                self.assertEqual(result['payee'], "a payee")
-            with self.subTest():
-                self.assertEqual(result['timestamp'],
-                                 datetime.fromisoformat(
-                                     "2019-12-10T13:12:00+00:00"))
-
-    async def test_request_bad_content_type_returns_415(self) -> None:
-        """Responds 415 to POST requests with incorrect Content-Type."""
-        async with get_test_client() as clients:
-            client, _ = clients
+            new_transaction = {
+                "amount": 1.23,
+                "description": "a description",
+                "payee": "payee",
+                "timestamp": "2019-12-10T08:12-05:00",
+                "account_id": str(account_id),
+            }
 
             response = await client.post(
-                '/transaction/one',
-                headers={'content-type': 'text/plain'},
-                content='invalid data')
+                "/transaction",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"},
+                json=new_transaction)
 
-        self.assertEqual(415, response.status_code)
+            with self.subTest(
+                    msg="Responds with a status code of 201."):
+                self.assertEqual(201, response.status_code)
 
-    async def test_request_isnt_transaction(self) -> None:
-        """
-        Responds 422 to POST requests sending json that isn't a Transaction.
-        """
-        async with get_test_client() as clients:
-            client, _ = clients
+            with self.subTest(
+                msg="Responds with new Transaction's information."
+            ):
+                body = response.json()
 
-            response = await client.post(
-                '/transaction/one',
-                json={'data': "isn't a transaction"})
+                with self.subTest():
+                    self.assertTrue(UUID(body["id"]))
+                with self.subTest():
+                    self.assertEqual(body["amount"],
+                                     new_transaction["amount"])
+                with self.subTest():
+                    self.assertEqual(body["description"],
+                                     new_transaction["description"])
+                with self.subTest():
+                    self.assertEqual(body["payee"], new_transaction["payee"])
+                with self.subTest():
+                    self.assertEqual(
+                        datetime.fromisoformat(body["timestamp"]),
+                        datetime.fromisoformat(new_transaction["timestamp"]))
+                with self.subTest():
+                    self.assertEqual(body["account_id"],
+                                     new_transaction["account_id"])
 
-        self.assertEqual(422, response.status_code)
+            with self.subTest(
+                    msg="New Transaction is in the database."):
+                body = response.json()
+                new_id = UUID(body["id"])
+
+                await database.connect()
+                query_result = await database.execute_and_return(sql.SQL("""
+                    SELECT * FROM transaction
+                    WHERE id = {new_id};
+                """).format(new_id=sql.Literal(new_id)))
+                await database.disconnect()
+
+                result = query_result[0]
+
+                with self.subTest(
+                    msg="Given transaction amount & database match."
+                ):
+                    self.assertEqual(result["amount"],
+                                     Decimal(str(new_transaction["amount"])))
+                with self.subTest(
+                    msg="Given transaction payee & database match."
+                ):
+                    self.assertEqual(result["payee"], new_transaction["payee"])
+                with self.subTest(
+                    msg="Given transaction description & database match."
+                ):
+                    self.assertEqual(
+                        result["description"], new_transaction["description"])
+                with self.subTest(
+                    msg="Given transaction timestamp & database match."
+                ):
+                    self.assertEqual(
+                        result["timestamp"],
+                        datetime.fromisoformat(new_transaction["timestamp"]))
+                with self.subTest(
+                    msg="Given transaction account_id & database match."
+                ):
+                    self.assertEqual(
+                        result["account_id"],
+                        UUID(new_transaction["account_id"]))
 
 
 if __name__ == "__main__":

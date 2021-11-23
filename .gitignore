@@ -17,3 +17,6 @@ __pycache__/
 amqp_worker.egg-info/
 build/
 dist/
+
+# secrets
+.secrets

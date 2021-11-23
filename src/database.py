@@ -1,6 +1,8 @@
 """Database methods."""
 
 from db_wrapper import AsyncClient as Client, ConnectionParameters
+# import NoResultFound to re-export
+from db_wrapper.model.base import NoResultFound  # pylint: disable=W0611
 
 
 def create_conn_config(

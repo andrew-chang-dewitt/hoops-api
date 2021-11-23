@@ -1,23 +1,18 @@
-"""A Model for Transaction data types."""
+"""DB Model for Transaction objects."""
 
-import datetime
-from decimal import Decimal
-from typing import List, Optional
-
-from pydantic import (  # pylint: disable=no-name-in-module
-    BaseModel,
-    ConstrainedDecimal
-)
+from datetime import datetime
+from typing import List
+from uuid import UUID
 
 from db_wrapper.client import AsyncClient
 from db_wrapper.model import (
-    ModelData,
-    RealDictRow,
+    sql,
     AsyncModel,
     AsyncCreate,
-    AsyncRead,
-    sql,
 )
+from pydantic import ConstrainedDecimal  # pylint: disable=E0611
+
+from src.models.base import Base, BaseDb
 
 
 class Amount(ConstrainedDecimal):
@@ -28,99 +23,62 @@ class Amount(ConstrainedDecimal):
     decimal_places = 2
 
 
-class TransactionBase(BaseModel):
-    """Core Transaction data fields."""
-
-    # Essentially a dataclass, has no methods
-    # pylint: disable=too-few-public-methods
+class TransactionBase(Base):
+    """Base Transaction fields."""
 
     amount: Amount
     description: str
     payee: str
-    timestamp: datetime.datetime
+    timestamp: datetime
+    account_id: UUID
 
 
-class TransactionDB(ModelData, TransactionBase):  # pylint: disable=R0903
-    """Transactions in database have an ID."""
+class TransactionIn(TransactionBase):
+    """Fields used when creating a new Transaction."""
+
+    # simply a copy of TransactionBase for now
 
 
-class TransactionCreator(AsyncCreate[TransactionDB]):
-    """Additional/updated create methods."""
+class TransactionOut(TransactionBase, BaseDb):
+    """Fields used when reading a Transaction."""
 
-    # pylint: disable=too-few-public-methods
+    # adds `id` from BaseDb
 
-    async def one(self, transaction: TransactionBase) -> TransactionDB:
-        """Save a new transaction to the database."""
+
+class TransactionCreator(AsyncCreate[TransactionOut]):
+    """Extend default create methods."""
+
+    async def new(self, new_tran: TransactionIn) -> TransactionOut:
+        """Create & return new Transaction."""
         columns: List[sql.Identifier] = []
         values: List[sql.Literal] = []
 
-        for column, value in transaction.dict().items():
+        for column, value in new_tran.dict().items():
             values.append(sql.Literal(value))
 
             columns.append(sql.Identifier(column))
 
-        query = sql.SQL("""
-            INSERT INTO {table} ({columns}) 
-            VALUES ({values}) 
-            RETURNING *;
-        """).format(
+        query = sql.SQL(
+            'INSERT INTO {table} ({columns}) '
+            'VALUES ({values}) '
+            'RETURNING *;'
+        ).format(
             table=self._table,
             columns=sql.SQL(',').join(columns),
             values=sql.SQL(',').join(values),
         )
 
-        query_result: List[RealDictRow] = \
-            await self._client.execute_and_return(query)
-        result: TransactionDB = self._return_constructor(**query_result[0])
+        query_result = await self._client.execute_and_return(query)
 
-        return result
+        return TransactionOut(**query_result[0])
 
 
-class TransactionReader(AsyncRead[TransactionDB]):
-    """Additional read methods."""
-
-    async def many(
-        self,
-        limit: Optional[int],
-        page: Optional[int]
-    ) -> List[TransactionDB]:
-        """Return many transaction records."""
-        # default to 50 records
-        actual_limit = limit if limit is not None else 50
-        # default to first 0th page
-        actual_page = page if page is not None else 0
-        # offset is n times limit
-        # if limit = 50: (0, 0), (1, 50), ... (n+1, 50*n)
-        offset = actual_page * actual_limit
-
-        query = sql.SQL(
-            'SELECT * '
-            'FROM {table} '
-            'ORDER BY timestamp DESC '
-            'LIMIT {limit} OFFSET {offset};'
-        ).format(
-            table=self._table,
-            limit=sql.Literal(actual_limit),
-            offset=sql.Literal(offset),
-        )
-
-        query_result: List[RealDictRow] = \
-            await self._client.execute_and_return(query)
-        result = [self._return_constructor(**row)
-                  for row in query_result]
-
-        return result
-
-
-class TransactionModel(AsyncModel[TransactionDB]):
+class TransactionModel(AsyncModel[TransactionOut]):
     """Database queries for Transaction objects."""
 
     create: TransactionCreator
-    read: TransactionReader
 
     def __init__(self, client: AsyncClient) -> None:
-        table = 'transaction'
-
-        super().__init__(client, table, TransactionDB)
-        self.create = TransactionCreator(client, self.table, TransactionDB)
-        self.read = TransactionReader(client, self.table, TransactionDB)
+        """Override default CRUD methods & defer remaining to super."""
+        super().__init__(client, "transaction", TransactionOut)
+        self.create = TransactionCreator(client, self.table, TransactionOut)
