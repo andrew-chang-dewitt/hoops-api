@@ -24,7 +24,7 @@ def create_token(config: Config, database: Client) -> APIRouter:
 
     # add post_token route
     @token.post(
-        "/",
+        "",
         response_model=Token,
         summary="Get an authentication Token via an OAuth2 Request Form."
     )
