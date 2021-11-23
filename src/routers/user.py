@@ -1,4 +1,4 @@
-"""Routes under `/transaction`."""
+"""Routes under `/user`."""
 
 from uuid import UUID
 

@@ -9,10 +9,10 @@ from .config import create_default_config, Config
 from .database import create_client, NoResultFound
 from .routers import (
     status,
-    create_user,
-    create_token,
     create_account,
-    # create_transaction,
+    create_token,
+    create_transaction,
+    create_user,
 )
 
 
@@ -69,6 +69,6 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
     app.include_router(create_user(config, database))
     app.include_router(create_token(config, database))
     app.include_router(create_account(config, database))
-    # app.include_router(create_transaction(database))
+    app.include_router(create_transaction(config, database))
 
     return app
