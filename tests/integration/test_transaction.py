@@ -228,8 +228,8 @@ class TestRouteGetRoot(TestCase):
                         self.assertTrue(UUID(item["account_id"]))
 
 
-class TestRoutePutRoot(TestCase):
-    """Tests for `PUT /transaction`."""
+class TestRoutePutId(TestCase):
+    """Tests for `PUT /transaction/{id}`."""
 
     async def test_valid_request(self) -> None:
         """Testing a valid request's response."""
