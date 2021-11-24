@@ -59,4 +59,9 @@ def create_transaction(config: Config, database: Client) -> APIRouter:
         """Get all Transactions."""
         return await model.read.many_by_user(user_id)
 
+
+    @transaction.put("/{id}", response_model=TransactionOut, summary="Edit the given Transaction.")
+    async def put_id(changes: TransactionChanges, user_id: Depends(auth_user)) -> TransactionOut:
+        """Edit the given user."""
+
     return transaction
