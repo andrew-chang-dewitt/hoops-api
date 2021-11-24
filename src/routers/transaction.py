@@ -32,8 +32,7 @@ def create_transaction(config: Config, database: Client) -> APIRouter:
         "",
         response_model=TransactionOut,
         status_code=status_code.HTTP_201_CREATED,
-        summary="Create a new Transaction for the given Account.",
-    )
+        summary="Create a new Transaction for the given Account.")
     async def post_root(
         new_tran: TransactionIn,
         user_id: UUID = Depends(auth_user),
@@ -52,8 +51,7 @@ def create_transaction(config: Config, database: Client) -> APIRouter:
     @transaction.get(
         "",
         response_model=List[TransactionOut],
-        summary="Fetch all Transactions for the authenticated User.",
-    )
+        summary="Fetch all Transactions for the authenticated User.")
     async def get_root(
         user_id: UUID = Depends(auth_user)
     ) -> List[TransactionOut]:
@@ -69,7 +67,7 @@ def create_transaction(config: Config, database: Client) -> APIRouter:
         changes: TransactionChanges,
         user_id: UUID = Depends(auth_user),
     ) -> TransactionOut:
-        """Edit the given user."""
+        """Edit the given Transaction."""
         tran = await model.read.one_by_id(transaction_id)
         account = await account_model.read.one_by_id(tran.account_id)
 
@@ -79,5 +77,24 @@ def create_transaction(config: Config, database: Client) -> APIRouter:
             raise CredentialsException from exc
 
         return await model.update.changes(transaction_id, changes)
+
+    @transaction.delete(
+        "/{transaction_id}",
+        response_model=TransactionOut,
+        summary="Delete the given Transaction.")
+    async def delete_id(
+        transaction_id: UUID,
+        user_id: UUID = Depends(auth_user),
+    ) -> TransactionOut:
+        """Delete the given Transaction."""
+        tran = await model.read.one_by_id(transaction_id)
+        account = await account_model.read.one_by_id(tran.account_id)
+
+        try:
+            assert account.user_id == user_id
+        except AssertionError as exc:
+            raise CredentialsException from exc
+
+        return await model.delete.one_by_id(str(transaction_id))
 
     return transaction

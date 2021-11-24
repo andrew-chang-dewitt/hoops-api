@@ -331,8 +331,69 @@ class TestRoutePutId(TestCase):
             self.assertEqual(401, response.status_code)
 
 
-# class TestRouteDeleteId(TestCase):
-#     """Test DELETE /transaction/{id}."""
+class TestRouteDeleteId(TestCase):
+    """Test DELETE /transaction/{id}."""
+
+    async def test_valid_request(self) -> None:
+        """Testing a valid request's response."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            # insert some test transactions
+            user_id = (await setup_user(database))[0]
+            account_id = await setup_account(database, user_id)
+            query = sql.SQL("""
+                INSERT INTO
+                    transaction(amount, payee, description, timestamp, account_id)
+                VALUES
+                    (1.23, 'a payee', 'a description', {timestamp1}, {account_id})
+                RETURNING id;
+            """).format(
+                account_id=sql.Literal(account_id),
+                timestamp1=sql.Literal("2019-12-10T08:12-05:00"),
+            )
+            await database.connect()
+            tran_id = (await database.execute_and_return(query))[0]["id"]
+            await database.disconnect()
+
+            response = await client.delete(
+                f"{BASE_URL}/{tran_id}",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+    async def test_cant_delete_transactions_if_not_own_account(self) -> None:
+        """Return 401 attempting to delete transaction for other account."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            user_id, other_user = (await setup_user(database))
+            other_account = await setup_account(database, other_user)
+            query = sql.SQL("""
+                INSERT INTO
+                    transaction(amount, payee, description, timestamp, account_id)
+                VALUES
+                    (1.23, 'a payee', 'a description', {timestamp1}, {account_id})
+                RETURNING id;
+            """).format(
+                account_id=sql.Literal(other_account),
+                timestamp1=sql.Literal("2019-12-10T08:12-05:00"),
+            )
+            await database.connect()
+            tran_id = (await database.execute_and_return(query))[0]["id"]
+            await database.disconnect()
+
+            response = await client.delete(
+                f"{BASE_URL}/{tran_id}",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            self.assertEqual(401, response.status_code)
 
 
 if __name__ == "__main__":
