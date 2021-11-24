@@ -1,22 +1,26 @@
 """API server."""
 
-from typing import Awaitable, Callable
+from typing import Awaitable, Callable, Optional
 
 from fastapi import FastAPI, status as http_status, Request, Response
 from fastapi.responses import JSONResponse
 
-from .config import Config
+from .config import create_default_config, Config
 from .database import create_client, NoResultFound
 from .routers import (
     status,
-    create_user,
+    create_account,
     create_token,
-    # create_transaction,
+    create_transaction,
+    create_user,
 )
 
 
-def create_app(config: Config = Config()) -> FastAPI:
+def create_app(config: Optional[Config] = None) -> FastAPI:
     """Application factory, create new server with given configuration."""
+    if config is None:
+        config = create_default_config()
+
     database = create_client(config.database)
     app = FastAPI()
 
@@ -62,8 +66,9 @@ def create_app(config: Config = Config()) -> FastAPI:
         )
 
     app.include_router(status)
-    app.include_router(create_user(database))
-    app.include_router(create_token(database))
-    # app.include_router(create_transaction(database))
+    app.include_router(create_user(config, database))
+    app.include_router(create_token(config, database))
+    app.include_router(create_account(config, database))
+    app.include_router(create_transaction(config, database))
 
     return app
