@@ -1,7 +1,7 @@
 """DB Model for Transaction objects."""
 
 from datetime import datetime
-from typing import List
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
 from db_wrapper.client import AsyncClient
@@ -9,6 +9,7 @@ from db_wrapper.model import (
     sql,
     AsyncModel,
     AsyncCreate,
+    AsyncUpdate,
     AsyncRead,
 )
 from db_wrapper.model.base import NoResultFound
@@ -45,6 +46,16 @@ class TransactionOut(TransactionBase, BaseDb):
     """Fields used when reading a Transaction."""
 
     # adds `id` from BaseDb
+
+
+class TransactionChanges(Base):
+    """Object for changing any of the fields on an existing Transaction."""
+
+    amount: Optional[Amount]
+    description: Optional[str]
+    payee: Optional[str]
+    timestamp: Optional[datetime]
+    account_id: Optional[UUID]
 
 
 class TransactionCreator(AsyncCreate[TransactionOut]):
@@ -106,14 +117,56 @@ class TransactionReader(AsyncRead[TransactionOut]):
         return [TransactionOut(**tran) for tran in query_result]
 
 
+class TransactionUpdater(AsyncUpdate[TransactionOut]):
+    """Extended update methods."""
+
+    async def changes(
+        self,
+        existing_id: UUID,
+        changes: TransactionChanges
+    ) -> TransactionOut:
+        """Update existing Transaction with given changes."""
+        def compose_one_change(change: Tuple[str, Any]) -> sql.Composed:
+            key = change[0]
+            value = change[1]
+
+            return sql.SQL("{key} = {value}").format(
+                key=sql.Identifier(key), value=sql.Literal(value))
+
+        def compose_changes(changes: Dict[str, Any]) -> sql.Composed:
+            return sql.SQL(',').join(
+                [compose_one_change(change)
+                 for change in changes.items()
+                 if change[1]])
+
+        query = sql.SQL("""
+            UPDATE {table}
+            SET {changes}
+            WHERE id = {existing_id}
+            RETURNING *;
+        """).format(
+            table=self._table,
+            changes=compose_changes(changes.dict()),
+            existing_id=sql.Literal(existing_id),
+        )
+        query_result = await self._client.execute_and_return(query)
+
+        try:
+            return TransactionOut(**query_result[0])
+        except IndexError as err:
+            raise NoResultFound from err
+
+
 class TransactionModel(AsyncModel[TransactionOut]):
     """Database queries for Transaction objects."""
 
     create: TransactionCreator
     read: TransactionReader
+    update: TransactionUpdater
 
     def __init__(self, client: AsyncClient) -> None:
         """Override default CRUD methods & defer remaining to super."""
         super().__init__(client, "transaction", TransactionOut)
         self.create = TransactionCreator(client, self.table, TransactionOut)
         self.read = TransactionReader(client, self.table, TransactionOut)
+        self.update = TransactionUpdater(client, self.table, TransactionOut)

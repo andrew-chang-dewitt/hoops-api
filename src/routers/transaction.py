@@ -11,6 +11,7 @@ from src.database import Client
 from src.models import (
     TransactionIn,
     TransactionOut,
+    TransactionChanges,
     TransactionModel as Model,
     AccountModel,
 )
@@ -59,9 +60,24 @@ def create_transaction(config: Config, database: Client) -> APIRouter:
         """Get all Transactions."""
         return await model.read.many_by_user(user_id)
 
-
-    @transaction.put("/{id}", response_model=TransactionOut, summary="Edit the given Transaction.")
-    async def put_id(changes: TransactionChanges, user_id: Depends(auth_user)) -> TransactionOut:
+    @transaction.put(
+        "/{transaction_id}",
+        response_model=TransactionOut,
+        summary="Edit the given Transaction.")
+    async def put_id(
+        transaction_id: UUID,
+        changes: TransactionChanges,
+        user_id: UUID = Depends(auth_user),
+    ) -> TransactionOut:
         """Edit the given user."""
+        tran = await model.read.one_by_id(transaction_id)
+        account = await account_model.read.one_by_id(tran.account_id)
+
+        try:
+            assert account.user_id == user_id
+        except AssertionError as exc:
+            raise CredentialsException from exc
+
+        return await model.update.changes(transaction_id, changes)
 
     return transaction

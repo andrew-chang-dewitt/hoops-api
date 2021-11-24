@@ -10,7 +10,8 @@ from .account import (
 from .transaction import (
     TransactionModel,
     TransactionIn,
-    TransactionOut
+    TransactionOut,
+    TransactionChanges,
 )
 from .token import (
     Token,

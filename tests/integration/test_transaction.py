@@ -70,6 +70,14 @@ class TestRoutePostRoot(TestCase):
             user_id = (await setup_user(database))[0]
             account_id = await setup_account(database, user_id)
 
+            new_transaction = {
+                "amount": 1.23,
+                "description": "a description",
+                "payee": "payee",
+                "timestamp": "2019-12-10T08:12-05:00",
+                "account_id": str(account_id),
+            }
+
             response = await client.post(
                 BASE_URL,
                 headers={
@@ -268,25 +276,25 @@ class TestRoutePutId(TestCase):
                     msg="Responds with a status code of 200."):
                 self.assertEqual(200, response.status_code)
 
-            # with self.subTest(
-            #         msg="Returns the updated transaction."):
-            #     body = response.json()
+            with self.subTest(
+                    msg="Returns the updated transaction."):
+                body = response.json()
 
-            #     self.assertEqual(body["description"], changes["description"])
+                self.assertEqual(body["description"], changes["description"])
 
-            # with self.subTest(msg="Updates the database."):
-            #     new_id = UUID(body["id"])
+            with self.subTest(msg="Updates the database."):
+                new_id = UUID(body["id"])
 
-            #     await database.connect()
-            #     query_result = await database.execute_and_return(sql.SQL("""
-            #         SELECT * FROM transaction
-            #         WHERE id = {new_id};
-            #     """).format(new_id=sql.Literal(new_id)))
-            #     await database.disconnect()
+                await database.connect()
+                query_result = await database.execute_and_return(sql.SQL("""
+                    SELECT * FROM transaction
+                    WHERE id = {new_id};
+                """).format(new_id=sql.Literal(new_id)))
+                await database.disconnect()
 
-            #     result = query_result[0]
+                result = query_result[0]
 
-            #     self.assertEqual(result["description"], changes["description"])
+                self.assertEqual(result["description"], changes["description"])
 
 
 if __name__ == "__main__":
