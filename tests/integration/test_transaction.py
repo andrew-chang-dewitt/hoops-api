@@ -296,6 +296,44 @@ class TestRoutePutId(TestCase):
 
                 self.assertEqual(result["description"], changes["description"])
 
+    async def test_cant_update_transactions_if_not_own_account(self) -> None:
+        """Return 401 attempting to update transaction for other account."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            user_id, other_user = (await setup_user(database))
+            other_account = await setup_account(database, other_user)
+            query = sql.SQL("""
+                INSERT INTO
+                    transaction(amount, payee, description, timestamp, account_id)
+                VALUES
+                    (1.23, 'a payee', 'a description', {timestamp1}, {account_id})
+                RETURNING id;
+            """).format(
+                account_id=sql.Literal(other_account),
+                timestamp1=sql.Literal("2019-12-10T08:12-05:00"),
+            )
+            await database.connect()
+            tran_id = (await database.execute_and_return(query))[0]["id"]
+            await database.disconnect()
+
+            changes = {
+                "description": "new description",
+            }
+
+            response = await client.put(
+                f"{BASE_URL}/{tran_id}",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"},
+                json=changes)
+
+            self.assertEqual(401, response.status_code)
+
+
+# class TestRouteDeleteId(TestCase):
+#     """Test DELETE /transaction/{id}."""
+
 
 if __name__ == "__main__":
     main()
