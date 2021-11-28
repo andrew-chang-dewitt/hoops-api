@@ -91,6 +91,68 @@ async def setup_transactions(
     await database.disconnect()
 
 
+class TestRouteGetTotal(TestCase):
+    """Testing GET /balance/total."""
+
+    async def test_valid_request(self) -> None:
+        """Testing a valid request's response."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            # insert some test transactions
+            user_id = (await setup_user(database))[0]
+            account1_id = await setup_account(database, user_id)
+            await setup_transactions(
+                database,
+                [
+                    Decimal(1),
+                    Decimal(2),
+                    Decimal(3),
+                    Decimal(4),
+                    Decimal(5),
+                    Decimal(6),
+                    Decimal(7),
+                    Decimal(8),
+                    Decimal(9),
+                    Decimal(10),
+                ],
+                account1_id)
+
+            account2_id = await setup_account(database, user_id)
+            await setup_transactions(
+                database,
+                [
+                    Decimal(11),
+                    Decimal(12),
+                    Decimal(13),
+                    Decimal(14),
+                    Decimal(15),
+                    Decimal(16),
+                    Decimal(17),
+                    Decimal(18),
+                    Decimal(19),
+                    Decimal(20),
+                ],
+                account2_id)
+
+            response = await client.get(
+                f"{BASE_URL}/total",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            with self.subTest(
+                msg="Response has sum of Transaction amounts for all accounts."
+            ):
+                body = response.json()
+
+                self.assertEqual(body["amount"], 210)
+
+
 class TestRouteGetAccount(TestCase):
     """Testing GET /balance/account/{id}."""
 

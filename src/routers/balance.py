@@ -22,9 +22,17 @@ def create_balance(config: Config, database: Client) -> APIRouter:
     balance = APIRouter(prefix="/balance", tags=["Balance"])
 
     @balance.get(
+        "/total",
+        response_model=Balance,
+        summary="Get sum total Balance of all accounts for the current User."
+    )
+    async def get_root(user_id: UUID = Depends(auth_user)) -> Balance:
+        return await model.read.all_by_user(user_id)
+
+    @balance.get(
         "/account/{account_id}",
         response_model=Balance,
-        summary="Get the balance for the given account.",
+        summary="Get the Balance for the given account.",
     )
     async def get_account(
         account_id: UUID,
