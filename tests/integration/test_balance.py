@@ -128,6 +128,17 @@ class TestRouteGetAccount(TestCase):
                     msg="Responds with a status code of 200."):
                 self.assertEqual(200, response.status_code)
 
+            with self.subTest(msg="Response contains name of account."):
+                body = response.json()
+
+                self.assertEqual(body["collection"], "an account")
+
+            with self.subTest(
+                    msg="Response contains sum of Transaction amounts."):
+                body = response.json()
+
+                self.assertEqual(body["amount"], 55)
+
 
 if __name__ == "__main__":
     main()

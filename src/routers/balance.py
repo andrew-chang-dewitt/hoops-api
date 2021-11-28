@@ -26,10 +26,10 @@ def create_balance(config: Config, database: Client) -> APIRouter:
         response_model=Balance,
         summary="Get the balance for the given account.",
     )
-    def get_account(
+    async def get_account(
         account_id: UUID,
         user_id: UUID = Depends(auth_user)
     ) -> Balance:
-        pass
+        return await model.read.one_by_account(account_id, user_id)
 
     return balance
