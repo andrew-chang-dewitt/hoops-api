@@ -13,17 +13,9 @@ from db_wrapper.model import (
     AsyncRead,
 )
 from db_wrapper.model.base import NoResultFound
-from pydantic import ConstrainedDecimal  # pylint: disable=E0611
 
+from src.models.amount import Amount
 from src.models.base import Base, BaseDb
-
-
-class Amount(ConstrainedDecimal):
-    """A Decimal, constrained to 2 decimal places."""
-
-    # pylint: disable=too-few-public-methods
-
-    decimal_places = 2
 
 
 class TransactionBase(Base):
