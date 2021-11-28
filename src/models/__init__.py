@@ -7,6 +7,10 @@ from .account import (
     AccountOut,
     AccountModel,
 )
+from .balance import (
+    Balance,
+    BalanceModel
+)
 from .transaction import (
     TransactionModel,
     TransactionIn,

@@ -1,4 +1,4 @@
-"""Tests for /user routes."""
+"""Tests for /transaction routes."""
 
 from datetime import datetime
 from decimal import Decimal
