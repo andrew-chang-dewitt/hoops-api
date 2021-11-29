@@ -23,8 +23,6 @@ BASE_URL = "/envelope"
 class TestRoutePostRoot(TestCase):
     """Testing POST /envelope."""
 
-    # FIXME: nothing below has been updated to current tests yet
-
     async def test_valid_request(self) -> None:
         """Testing a valid request's response."""
         async with get_test_client() as clients:
