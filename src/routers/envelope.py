@@ -62,4 +62,16 @@ def create_envelope(config: Config, database: Client) -> APIRouter:
     ) -> EnvelopeOut:
         return await model.read.one(envelope_id, user_id)
 
+    @envelope.put(
+        "/{envelope_id}",
+        response_model=EnvelopeOut,
+        summary="Update the given Envelope."
+    )
+    async def put_id(
+        envelope_id: UUID,
+        changes: EnvelopeChanges,
+        user_id: UUID = Depends(auth_user),
+    ) -> EnvelopeOut:
+        return await model.update.changes(envelope_id, user_id, changes)
+
     return envelope

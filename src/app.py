@@ -61,8 +61,6 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
                     'method': req.method,
                     'headers': str(req.headers),
                     'query_parameters': str(req.query_params),
-                    # json decoder breaks on empty body
-                    'body': await req.json() if await req.body() else None,
                 }
             }
         )

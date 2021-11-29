@@ -221,5 +221,104 @@ class TestRouteGetId(TestCase):
                 self.assertEqual(404, response.status_code)
 
 
+class TestRoutePutId(TestCase):
+    """Testing PUT /envelope/{id}."""
+
+    async def test_valid_request(self) -> None:
+        """Testing a valid request's response."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            user_id = await setup_user(database, "first")
+
+            add_envelope_query = sql.SQL("""
+                INSERT INTO envelope
+                    (name, total_funds, user_id)
+                VALUES
+                    ('envelope', 1.00, {user_id})
+                RETURNING
+                    id;
+            """).format(
+                user_id=sql.Literal(user_id))
+
+            await database.connect()
+            query_result = \
+                await database.execute_and_return(add_envelope_query)
+            await database.disconnect()
+            envelope_id = query_result[0]["id"]
+
+            changes = {"name": "new name"}
+
+            response = await client.put(
+                f"{BASE_URL}/{envelope_id}",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"},
+                json=changes)
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            with self.subTest(
+                    msg="Responds with requested Envelope's updated data."):
+                body = response.json()
+
+                with self.subTest(msg="Includes the Envelope's name."):
+                    self.assertEqual(body["name"], changes["name"])
+
+            with self.subTest(msg="Saves changes to the database."):
+                body = response.json()
+                new_id = UUID(body["id"])
+
+                await database.connect()
+                query_result = await database.execute_and_return(sql.SQL("""
+                    SELECT * FROM envelope
+                    WHERE id = {new_id};
+                """).format(new_id=sql.Literal(new_id)))
+                await database.disconnect()
+
+                result = query_result[0]
+
+                self.assertEqual(result["name"], changes["name"])
+
+    async def test_can_only_change_own_envelopes(self) -> None:
+        """A User can't change another User's Envelopes."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            user_id = await setup_user(database, "first")
+            other_id = await setup_user(database, "other")
+
+            add_envelope_query = sql.SQL("""
+                INSERT INTO envelope
+                    (name, total_funds, user_id)
+                VALUES
+                    ('envelope', 1.00, {user_id})
+                RETURNING
+                    id;
+            """).format(
+                user_id=sql.Literal(user_id))
+
+            await database.connect()
+            query_result = \
+                await database.execute_and_return(add_envelope_query)
+            await database.disconnect()
+            envelope_id = query_result[0]["id"]
+
+            changes = {"name": "new name"}
+
+            response = await client.put(
+                f"{BASE_URL}/{envelope_id}",
+                headers={
+                    **get_token_header(other_id),
+                    "accept": "application/json"},
+                json=changes)
+
+            with self.subTest(
+                    msg="Responds with a status code of 404."):
+                self.assertEqual(404, response.status_code)
+
+
 if __name__ == "__main__":
     main()

@@ -12,6 +12,7 @@ from .balance import (
     BalanceModel
 )
 from .envelope import (
+    EnvelopeChanges,
     EnvelopeIn,
     EnvelopeModel,
     EnvelopeNew,

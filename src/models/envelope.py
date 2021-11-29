@@ -11,7 +11,7 @@ from db_wrapper.model import (
     AsyncUpdate,
     AsyncModel,
 )
-from db_wrapper.model.base import ensure_exactly_one
+from db_wrapper.model.base import NoResultFound
 
 from src.models.amount import Amount
 from src.models.base import Base, BaseDb
@@ -39,7 +39,6 @@ class EnvelopeChanges(Base):
     """Fields used when updating an Envelope, all are optional."""
 
     name: Optional[str]
-    total_funds: Optional[Amount]
 
 
 class EnvelopeCreator(AsyncCreate[EnvelopeOut]):
@@ -82,9 +81,10 @@ class EnvelopeReader(AsyncRead[EnvelopeOut]):
             user_id=sql.Literal(str(user_id)))
         query_result = await self._client.execute_and_return(query)
 
-        ensure_exactly_one(query_result)
-
-        return EnvelopeOut(**query_result[0])
+        try:
+            return EnvelopeOut(**query_result[0])
+        except IndexError as err:
+            raise NoResultFound from err
 
     async def many_by_user(
         self,
@@ -102,16 +102,66 @@ class EnvelopeReader(AsyncRead[EnvelopeOut]):
         return [EnvelopeOut(**envelope) for envelope in query_result]
 
 
+class EnvelopeUpdater(AsyncUpdate[EnvelopeOut]):
+    """Extended update methods."""
+
+    async def one_by_id(self, _: str, __: Dict[str, Any]) -> EnvelopeOut:
+        """Un-implemented to force use of update.changes method."""
+        raise NotImplementedError()
+
+    async def changes(
+        self,
+        envelope_id: UUID,
+        user_id: UUID,
+        changes: EnvelopeChanges
+    ) -> EnvelopeOut:
+        """Update only the given fields for the given user."""
+        def compose_one_change(change: Tuple[str, Any]) -> sql.Composed:
+            key = change[0]
+            value = change[1]
+
+            return sql.SQL("{key} = {value}").format(
+                key=sql.Identifier(key), value=sql.Literal(value))
+
+        def compose_changes(changes: Dict[str, Any]) -> sql.Composed:
+            return sql.SQL(',').join(
+                [compose_one_change(change)
+                 for change in changes.items()
+                 if change[1]])
+
+        composed = compose_changes(changes.dict())
+        query = sql.SQL("""
+            UPDATE {table}
+            SET {changes}
+            WHERE id = {envelope_id}
+            AND user_id = {user_id}
+            RETURNING *;
+        """).format(
+            table=self._table,
+            changes=composed,
+            envelope_id=sql.Literal(envelope_id),
+            user_id=sql.Literal(user_id),
+        )
+        query_result = await self._client.execute_and_return(query)
+
+        try:
+            result = query_result[0]
+        except IndexError as err:
+            raise NoResultFound from err
+
+        return EnvelopeOut(**result)
+
+
 class EnvelopeModel(AsyncModel[EnvelopeOut]):
     """Envelope database methods."""
 
     create: EnvelopeCreator
     read: EnvelopeReader
-    # update: EnvelopeUpdater
+    update: EnvelopeUpdater
 
     def __init__(self, client: AsyncClient) -> None:
         """Create Envelope Model."""
         super().__init__(client, "envelope", EnvelopeOut)
         self.create = EnvelopeCreator(client, self.table, EnvelopeOut)
         self.read = EnvelopeReader(client, self.table, EnvelopeOut)
-        # self.update = EnvelopeUpdater(client, self.table, EnvelopeOut)
+        self.update = EnvelopeUpdater(client, self.table, EnvelopeOut)
