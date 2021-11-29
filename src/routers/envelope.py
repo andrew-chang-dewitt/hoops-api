@@ -54,7 +54,7 @@ def create_envelope(config: Config, database: Client) -> APIRouter:
     @envelope.get(
         "/{envelope_id}",
         response_model=EnvelopeOut,
-        summary="Get all Envelopes for current user."
+        summary="Get requested Envelope for current user."
     )
     async def get_id(
         envelope_id: UUID,
