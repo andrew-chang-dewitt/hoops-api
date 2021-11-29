@@ -12,10 +12,9 @@ from tests.helpers.application import (
 )
 from tests.helpers.database import (
     setup_user,
-    setup_account,
-    setup_transactions,
+    # setup_account,
+    # setup_transactions,
 )
-from src.database import Client
 
 BASE_URL = "/envelope"
 
@@ -79,6 +78,63 @@ class TestRoutePostRoot(TestCase):
                     self.assertEqual(result["user_id"], user_id)
                 with self.subTest(msg="Starts with 0 funds."):
                     self.assertEqual(result["total_funds"], 0)
+
+
+class TestRouteGetRoot(TestCase):
+    """Testing GET /envelope."""
+
+    async def test_valid_request(self) -> None:
+        """Testing a valid request's response."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            user_id = await setup_user(database, "first")
+            other_id = await setup_user(database, "other")
+
+            add_envelope_query = sql.SQL("""
+                INSERT INTO envelope
+                    (name, total_funds, user_id)
+                VALUES
+                    ('envelope', 1.00, {user_id}),
+                    ('envelope', 1.00, {user_id}),
+                    ('envelope', 1.00, {user_id}),
+                    ('envelope', 1.00, {other_id});
+            """).format(
+                user_id=sql.Literal(user_id),
+                other_id=sql.Literal(other_id))
+
+            await database.connect()
+            await database.execute(add_envelope_query)
+            await database.disconnect()
+
+            response = await client.get(
+                BASE_URL,
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            with self.subTest(
+                msg="Responds w/ all Envelopes belonging to current user."
+            ):
+                body = response.json()
+
+                self.assertEqual(
+                    len(body), 3, msg="Body should contain 3 Envelopes.")
+
+                for item in body:
+                    with self.subTest(msg="Envelope has a name."):
+                        self.assertEqual(item["name"], "envelope")
+                    with self.subTest(
+                            msg="Bound to current user in auth token."):
+                        self.assertEqual(item["user_id"], str(user_id))
+                    with self.subTest(msg="Envelope has a UUID identifier."):
+                        self.assertTrue(UUID(item["id"]))
+                    with self.subTest(msg="Envelope has funds."):
+                        self.assertEqual(item["total_funds"], 1.00)
 
 
 if __name__ == "__main__":

@@ -63,16 +63,36 @@ class EnvelopeCreator(AsyncCreate[EnvelopeOut]):
         return EnvelopeOut(**query_result[0])
 
 
+class EnvelopeReader(AsyncRead[EnvelopeOut]):
+    """Extended read methods."""
+
+    async def many_by_user(
+        self,
+        user_id: UUID,
+    ) -> List[EnvelopeOut]:
+        """Get list of envelopes for user."""
+        query = sql.SQL("""
+            SELECT * FROM {table}
+            WHERE user_id = {user_id};
+        """).format(
+            table=self._table,
+            user_id=sql.Literal(str(user_id)))
+        query_result = \
+            await self._client.execute_and_return(query)
+
+        return [EnvelopeOut(**envelope) for envelope in query_result]
+
+
 class EnvelopeModel(AsyncModel[EnvelopeOut]):
     """Envelope database methods."""
 
     create: EnvelopeCreator
-    # read: EnvelopeReader
+    read: EnvelopeReader
     # update: EnvelopeUpdater
 
     def __init__(self, client: AsyncClient) -> None:
         """Create Envelope Model."""
         super().__init__(client, "envelope", EnvelopeOut)
         self.create = EnvelopeCreator(client, self.table, EnvelopeOut)
-        # self.read = EnvelopeReader(client, self.table, EnvelopeOut)
+        self.read = EnvelopeReader(client, self.table, EnvelopeOut)
         # self.update = EnvelopeUpdater(client, self.table, EnvelopeOut)

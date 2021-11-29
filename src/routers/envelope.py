@@ -1,6 +1,7 @@
 """Routes under `/envelope`."""
 
-from uuid import UUID
+from typing import List
+from uuid import uuid1, UUID
 
 from fastapi import Depends
 from fastapi.routing import APIRouter
@@ -38,5 +39,15 @@ def create_envelope(config: Config, database: Client) -> APIRouter:
     ) -> EnvelopeOut:
         return await model.create.new(
             EnvelopeNew(**envelope.dict(), user_id=user_id))
+
+    @envelope.get(
+        "",
+        response_model=List[EnvelopeOut],
+        summary="Get all Envelopes for current user."
+    )
+    async def get_root(
+        user_id: UUID = Depends(auth_user)
+    ) -> List[EnvelopeOut]:
+        return await model.read.many_by_user(user_id)
 
     return envelope
