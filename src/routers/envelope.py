@@ -9,6 +9,7 @@ from fastapi.routing import APIRouter
 from src.config import Config
 from src.database import Client
 from src.models import (
+    EnvelopeChanges,
     EnvelopeIn,
     EnvelopeNew,
     EnvelopeOut,
@@ -49,5 +50,16 @@ def create_envelope(config: Config, database: Client) -> APIRouter:
         user_id: UUID = Depends(auth_user)
     ) -> List[EnvelopeOut]:
         return await model.read.many_by_user(user_id)
+
+    @envelope.get(
+        "/{envelope_id}",
+        response_model=EnvelopeOut,
+        summary="Get all Envelopes for current user."
+    )
+    async def get_id(
+        envelope_id: UUID,
+        user_id: UUID = Depends(auth_user)
+    ) -> EnvelopeOut:
+        return await model.read.one(envelope_id, user_id)
 
     return envelope

@@ -137,5 +137,89 @@ class TestRouteGetRoot(TestCase):
                         self.assertEqual(item["total_funds"], 1.00)
 
 
+class TestRouteGetId(TestCase):
+    """Testing GET /envelope/{id}."""
+
+    async def test_valid_request(self) -> None:
+        """Testing a valid request's response."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            user_id = await setup_user(database, "first")
+
+            add_envelope_query = sql.SQL("""
+                INSERT INTO envelope
+                    (name, total_funds, user_id)
+                VALUES
+                    ('envelope', 1.00, {user_id})
+                RETURNING
+                    id;
+            """).format(
+                user_id=sql.Literal(user_id))
+
+            await database.connect()
+            query_result = \
+                await database.execute_and_return(add_envelope_query)
+            await database.disconnect()
+            envelope_id = query_result[0]["id"]
+
+            response = await client.get(
+                f"{BASE_URL}/{envelope_id}",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            with self.subTest(
+                    msg="Responds with requested Envelope's data."):
+                body = response.json()
+
+                with self.subTest(msg="Includes the Envelope's name."):
+                    self.assertEqual(body["name"], "envelope")
+                with self.subTest(msg="Bound to current user in auth token."):
+                    self.assertEqual(body["user_id"], str(user_id))
+                with self.subTest(msg="Has a UUID identifier."):
+                    self.assertEqual(body["id"], str(envelope_id))
+                with self.subTest(msg="Includes Envelope's funds."):
+                    self.assertEqual(body["total_funds"], 1)
+
+    async def test_can_only_get_own_envelopes(self) -> None:
+        """A User can't get another User's Envelopes."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            user_id = await setup_user(database, "first")
+            other_id = await setup_user(database, "other")
+
+            add_envelope_query = sql.SQL("""
+                INSERT INTO envelope
+                    (name, total_funds, user_id)
+                VALUES
+                    ('envelope', 1.00, {user_id})
+                RETURNING
+                    id;
+            """).format(
+                user_id=sql.Literal(user_id))
+
+            await database.connect()
+            query_result = \
+                await database.execute_and_return(add_envelope_query)
+            await database.disconnect()
+            envelope_id = query_result[0]["id"]
+
+            response = await client.get(
+                f"{BASE_URL}/{envelope_id}",
+                headers={
+                    **get_token_header(other_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 404."):
+                self.assertEqual(404, response.status_code)
+
+
 if __name__ == "__main__":
     main()

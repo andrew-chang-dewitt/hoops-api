@@ -11,7 +11,7 @@ from db_wrapper.model import (
     AsyncUpdate,
     AsyncModel,
 )
-from db_wrapper.model.base import NoResultFound
+from db_wrapper.model.base import ensure_exactly_one
 
 from src.models.amount import Amount
 from src.models.base import Base, BaseDb
@@ -66,6 +66,26 @@ class EnvelopeCreator(AsyncCreate[EnvelopeOut]):
 class EnvelopeReader(AsyncRead[EnvelopeOut]):
     """Extended read methods."""
 
+    async def one(
+            self,
+            envelope_id: UUID,
+            user_id: UUID,
+    ) -> EnvelopeOut:
+        """Get a single envelope for given user & id."""
+        query = sql.SQL("""
+            SELECT * FROM {table}
+            WHERE id = {envelope_id}
+            AND user_id = {user_id};
+        """).format(
+            table=self._table,
+            envelope_id=sql.Literal(str(envelope_id)),
+            user_id=sql.Literal(str(user_id)))
+        query_result = await self._client.execute_and_return(query)
+
+        ensure_exactly_one(query_result)
+
+        return EnvelopeOut(**query_result[0])
+
     async def many_by_user(
         self,
         user_id: UUID,
@@ -77,8 +97,7 @@ class EnvelopeReader(AsyncRead[EnvelopeOut]):
         """).format(
             table=self._table,
             user_id=sql.Literal(str(user_id)))
-        query_result = \
-            await self._client.execute_and_return(query)
+        query_result = await self._client.execute_and_return(query)
 
         return [EnvelopeOut(**envelope) for envelope in query_result]
 
