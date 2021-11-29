@@ -31,6 +31,16 @@ class CredentialsException(HTTPException):
         )
 
 
+class UnauthorizedException(HTTPException):
+    """Throw when unable to process a user's credentials."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=status_code.HTTP_403_FORBIDDEN,
+            detail="User not authorized for method on requested resource",
+        )
+
+
 def encode_token(
     user_id: UUID,
     key: str,

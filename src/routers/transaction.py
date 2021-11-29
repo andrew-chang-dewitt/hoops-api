@@ -15,7 +15,7 @@ from src.models import (
     TransactionModel as Model,
     AccountModel,
 )
-from src.security import create_auth_dep, CredentialsException
+from src.security import create_auth_dep, UnauthorizedException
 
 
 def create_transaction(config: Config, database: Client) -> APIRouter:
@@ -44,7 +44,7 @@ def create_transaction(config: Config, database: Client) -> APIRouter:
         try:
             assert account.user_id == user_id
         except AssertionError as exc:
-            raise CredentialsException from exc
+            raise UnauthorizedException from exc
 
         return await model.create.new(new_tran)
 
@@ -74,7 +74,7 @@ def create_transaction(config: Config, database: Client) -> APIRouter:
         try:
             assert account.user_id == user_id
         except AssertionError as exc:
-            raise CredentialsException from exc
+            raise UnauthorizedException from exc
 
         return await model.update.changes(transaction_id, changes)
 
@@ -93,7 +93,7 @@ def create_transaction(config: Config, database: Client) -> APIRouter:
         try:
             assert account.user_id == user_id
         except AssertionError as exc:
-            raise CredentialsException from exc
+            raise UnauthorizedException from exc
 
         return await model.delete.one_by_id(str(transaction_id))
 
