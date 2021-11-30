@@ -154,7 +154,7 @@ class TestRoutePostRoot(TestCase):
                         UUID(new_transaction["account_id"]))
 
     async def test_cant_create_transactions_if_not_own_account(self) -> None:
-        """Return 401 attempting to create transaction for other account."""
+        """Return 403 attempting to create transaction for other account."""
         async with get_test_client() as clients:
             client, database = clients
 
@@ -176,7 +176,7 @@ class TestRoutePostRoot(TestCase):
                     "accept": "application/json"},
                 json=new_transaction)
 
-            self.assertEqual(401, response.status_code)
+            self.assertEqual(403, response.status_code)
 
 
 class TestRouteGetRoot(TestCase):
@@ -297,7 +297,7 @@ class TestRoutePutId(TestCase):
                 self.assertEqual(result["description"], changes["description"])
 
     async def test_cant_update_transactions_if_not_own_account(self) -> None:
-        """Return 401 attempting to update transaction for other account."""
+        """Return 403 attempting to update transaction for other account."""
         async with get_test_client() as clients:
             client, database = clients
 
@@ -328,7 +328,7 @@ class TestRoutePutId(TestCase):
                     "accept": "application/json"},
                 json=changes)
 
-            self.assertEqual(401, response.status_code)
+            self.assertEqual(403, response.status_code)
 
 
 class TestRouteDeleteId(TestCase):
@@ -367,7 +367,7 @@ class TestRouteDeleteId(TestCase):
                 self.assertEqual(200, response.status_code)
 
     async def test_cant_delete_transactions_if_not_own_account(self) -> None:
-        """Return 401 attempting to delete transaction for other account."""
+        """Return 403 attempting to delete transaction for other account."""
         async with get_test_client() as clients:
             client, database = clients
 
@@ -393,7 +393,7 @@ class TestRouteDeleteId(TestCase):
                     **get_token_header(user_id),
                     "accept": "application/json"})
 
-            self.assertEqual(401, response.status_code)
+            self.assertEqual(403, response.status_code)
 
 
 if __name__ == "__main__":
