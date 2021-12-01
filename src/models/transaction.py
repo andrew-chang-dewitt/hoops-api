@@ -1,7 +1,7 @@
 """DB Model for Transaction objects."""
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
 from db_wrapper.client import AsyncClient
@@ -16,6 +16,12 @@ from db_wrapper.model.base import NoResultFound
 
 from src.models.amount import Amount
 from src.models.base import Base, BaseDb
+from src.models.filters import (
+    build_query_filters,
+    build_pagination_filters,
+    Condition,
+    Logical
+)
 
 
 class TransactionBase(Base):
@@ -81,7 +87,15 @@ class TransactionCreator(AsyncCreate[TransactionOut]):
 class TransactionReader(AsyncRead[TransactionOut]):
     """Extended read methods."""
 
-    async def many_by_user(self, user_id: UUID) -> List[TransactionOut]:
+    async def many_by_user(
+        self,
+        user_id: UUID,
+        *,
+        limit: int,
+        page: int,
+        sort: str,
+        **kwargs: Union[Condition, Logical, None],
+    ) -> List[TransactionOut]:
         """Get list of Transactions for User."""
         query = sql.SQL("""
             SELECT
@@ -98,11 +112,14 @@ class TransactionReader(AsyncRead[TransactionOut]):
             ON
                 a.id = t.account_id
             WHERE
-                a.user_id = {user_id};
+                a.user_id = {user_id}
+            {filters}
+            {paginate};
         """).format(
             table=self._table,
-            user_id=sql.Literal(user_id)
-        )
+            user_id=sql.Literal(user_id),
+            filters=build_query_filters(kwargs),
+            paginate=build_pagination_filters(limit, page, sort))
 
         query_result = await self._client.execute_and_return(query)
 

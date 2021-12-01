@@ -2,6 +2,7 @@
 
 from .account import create_account
 from .balance import create_balance
+from .envelope import create_envelope
 from .token import create_token
 from .transaction import create_transaction
 from .status import status

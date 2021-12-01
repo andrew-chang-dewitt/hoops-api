@@ -14,6 +14,7 @@ from db_wrapper.model import (
 from db_wrapper.model.base import NoResultFound
 
 from src.models.base import Base, BaseDb
+from src.models.filters import build_query_equality_filters
 
 
 class AccountIn(Base):
@@ -71,22 +72,6 @@ class AccountReader(AsyncRead[AccountOut]):
         **kwargs: Any
     ) -> List[AccountOut]:
         """Get list of accounts for user."""
-        def build_one_filter(column: str, value: Any) -> sql.Composed:
-            return sql.SQL(
-                "AND {column} = {value}"
-            ).format(
-                column=sql.Identifier(column),
-                value=sql.Literal(value))
-
-        def build_filters(filters: AccountChanges) -> sql.Composed:
-            filter_queries: List[sql.Composed] = []
-
-            for key, value in filters.dict().items():
-                if value is not None:
-                    filter_queries.append(build_one_filter(key, value))
-
-            return sql.SQL(" ").join(filter_queries)
-
         filter_values = AccountChanges(**{
             # default to filtering by accounts not marked as closed
             "closed": False,
@@ -101,7 +86,7 @@ class AccountReader(AsyncRead[AccountOut]):
         """).format(
             table=self._table,
             user_id=sql.Literal(str(user_id)),
-            filters=build_filters(filter_values))
+            filters=build_query_equality_filters(filter_values))
         query_result = \
             await self._client.execute_and_return(query)
 

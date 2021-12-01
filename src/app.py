@@ -11,6 +11,7 @@ from .routers import (
     status,
     create_account,
     create_balance,
+    create_envelope,
     create_token,
     create_transaction,
     create_user,
@@ -60,8 +61,6 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
                     'method': req.method,
                     'headers': str(req.headers),
                     'query_parameters': str(req.query_params),
-                    # json decoder breaks on empty body
-                    'body': await req.json() if await req.body() else None,
                 }
             }
         )
@@ -72,5 +71,6 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
     app.include_router(create_account(config, database))
     app.include_router(create_transaction(config, database))
     app.include_router(create_balance(config, database))
+    app.include_router(create_envelope(config, database))
 
     return app

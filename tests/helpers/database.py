@@ -1,6 +1,8 @@
 """Test helper methods."""
 
-from typing import Any, Tuple, TypeVar
+from decimal import Decimal
+from typing import Any, Dict, List, Optional, Tuple, TypeVar
+from uuid import UUID
 from unittest.mock import Mock
 
 from db_wrapper.model import (
@@ -88,3 +90,83 @@ async def get_test_db() -> Tuple[ConnectionParameters, Client]:
     sync(['silent', 'noprompt'], config)
 
     return test_db_params, test_client
+
+
+#
+# INSERT DATA
+#
+
+
+async def setup_user(database: Client, handle: str = "user") -> UUID:
+    """Set up database with 2 users for testing."""
+    query = sql.SQL("""
+        INSERT INTO
+            hoops_user(handle, full_name, preferred_name, password)
+        VALUES
+            ({handle}, 'A Full Name', 'Nickname', '@ new p4s5w0rd')
+        RETURNING id;
+    """).format(
+        handle=sql.Literal(handle)
+    )
+
+    await database.connect()
+    result: List[Dict[str, UUID]] = await database.execute_and_return(query)
+    await database.disconnect()
+
+    return result[0]["id"]
+
+
+async def setup_account(
+    database: Client,
+    user_id: Optional[UUID] = None
+) -> UUID:
+    """Set up database with 1 account for given user for testing."""
+    if not user_id:
+        user_id = await setup_user(database)
+
+    query = sql.SQL("""
+        INSERT INTO account(user_id, name)
+        VALUES ({user_id}, {name})
+        RETURNING id;
+    """).format(
+        user_id=sql.Literal(user_id),
+        name=sql.Literal("an account"))
+
+    await database.connect()
+    result: List[Dict[str, UUID]] = await database.execute_and_return(query)
+    await database.disconnect()
+
+    return result[0]["id"]
+
+
+async def setup_transactions(
+    database: Client,
+    amounts: List[Decimal],
+    account_id: Optional[UUID] = None,
+) -> None:
+    """Set up database with transactions of given amounts."""
+    if not account_id:
+        account_id = await setup_account(database)
+
+    def build_transaction(amount: Decimal) -> sql.Composed:
+        return sql.SQL("""
+            ({amount},
+             'payee',
+             'description',
+             '2019-12-10T08:12-05:00',
+             {account_id})
+        """).format(
+            amount=sql.Literal(amount),
+            account_id=sql.Literal(account_id))
+
+    query = sql.SQL("""
+        INSERT INTO
+            transaction(amount, payee, description, timestamp, account_id)
+        VALUES {amounts};
+    """).format(
+        amounts=sql.SQL(",").join(
+            [build_transaction(amount) for amount in amounts]))
+
+    await database.connect()
+    await database.execute(query)
+    await database.disconnect()
