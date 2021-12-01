@@ -1,9 +1,11 @@
 """Transaction router."""
 
-from typing import List
+from datetime import datetime
+from decimal import Decimal
+from typing import List, Optional
 from uuid import UUID
 
-from fastapi import status as status_code, Depends
+from fastapi import status as status_code, Depends, Query
 from fastapi.routing import APIRouter
 
 from src.config import Config
@@ -15,6 +17,13 @@ from src.models import (
     TransactionModel as Model,
     AccountModel,
 )
+from src.models.filters import (
+    equals,
+    greater_than_or_equal_to,
+    less_than_or_equal_to,
+    logical_and,
+)
+from src.routers.helpers.filters import a_b_both_or_none
 from src.security import create_auth_dep, UnauthorizedException
 
 
@@ -48,15 +57,73 @@ def create_transaction(config: Config, database: Client) -> APIRouter:
 
         return await model.create.new(new_tran)
 
+    default_limit = Query(
+        50,
+        description="Only return specified number of Transactions.")
+    default_page = Query(
+        0,
+        description="Return given page of Transactions.")
+    default_sort = Query(
+        "timestamp",
+        description="Sort Transactions by given column.")
+    default_account_id = Query(
+        None,
+        description="Only return Transactions belonging to this Account.")
+    default_payee = Query(
+        None,
+        description="Only return Transactions with matching payee.")
+    default_minimum_amount = Query(
+        None,
+        description="Only return Transactions greater than or equal to amount."
+    )
+    default_maximum_amount = Query(
+        None,
+        description="Only return Transactions less than or equal to amount.")
+    default_after = Query(
+        None,
+        description="Only return Transactions after the given date & time.")
+    default_before = Query(
+        None,
+        description="Only return Transactions before the given date & time.")
+
     @transaction.get(
         "",
         response_model=List[TransactionOut],
         summary="Fetch all Transactions for the authenticated User.")
     async def get_root(
-        user_id: UUID = Depends(auth_user)
+        user_id: UUID = Depends(auth_user),
+        account_id: Optional[UUID] = default_account_id,
+        payee: Optional[str] = default_payee,
+        minimum_amount: Optional[Decimal] = default_minimum_amount,
+        maximum_amount: Optional[Decimal] = default_maximum_amount,
+        after: Optional[datetime] = default_after,
+        before: Optional[datetime] = default_before,
+        limit: Optional[int] = default_limit,
+        page: Optional[int] = default_page,
+        sort: Optional[int] = default_sort,
     ) -> List[TransactionOut]:
         """Get all Transactions."""
-        return await model.read.many_by_user(user_id)
+        amount = a_b_both_or_none(minimum_amount,
+                                  maximum_amount,
+                                  greater_than_or_equal_to,
+                                  less_than_or_equal_to,
+                                  logical_and)
+        timestamp = a_b_both_or_none(after,
+                                     before,
+                                     greater_than_or_equal_to,
+                                     less_than_or_equal_to,
+                                     logical_and)
+
+        return await model.read.many_by_user(
+            user_id,
+            # mypy can't tell these have default values given by Query
+            limit=limit,  # type: ignore
+            page=page,  # type: ignore
+            sort=sort,  # type: ignore
+            account_id=equals(account_id),
+            payee=equals(payee),
+            amount=amount,
+            timestamp=timestamp)
 
     @transaction.put(
         "/{transaction_id}",

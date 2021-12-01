@@ -13,50 +13,10 @@ from tests.helpers.application import (
     get_test_client,
     get_token_header,
 )
+from tests.helpers.database import setup_user, setup_account
 from src.database import Client
 
 BASE_URL = "/transaction"
-
-
-async def setup_user(database: Client) -> Tuple[UUID, UUID]:
-    """Sets up database with 2 users for testing."""
-    query = """
-        INSERT INTO
-            hoops_user(handle, full_name, preferred_name, password)
-        VALUES
-            ('user', 'A Full Name', 'Nickname', '@ new p4s5w0rd'),
-            ('other', 'Other', 'Other', 'other')
-        RETURNING id;
-    """
-
-    await database.connect()
-    result: List[Dict[str, UUID]] = await database.execute_and_return(query)
-    await database.disconnect()
-
-    return result[0]["id"], result[1]["id"]
-
-
-async def setup_account(
-    database: Client,
-    user_id: Optional[UUID] = None
-) -> UUID:
-    """Sets up database with 1 account for given user for testing."""
-    if not user_id:
-        user_id = (await setup_user(database))[0]
-
-    query = sql.SQL("""
-        INSERT INTO account(user_id, name)
-        VALUES ({user_id}, {name})
-        RETURNING id;
-    """).format(
-        user_id=sql.Literal(user_id),
-        name=sql.Literal("an account"))
-
-    await database.connect()
-    result: List[Dict[str, UUID]] = await database.execute_and_return(query)
-    await database.disconnect()
-
-    return result[0]["id"]
 
 
 class TestRoutePostRoot(TestCase):
@@ -67,7 +27,7 @@ class TestRoutePostRoot(TestCase):
         async with get_test_client() as clients:
             client, database = clients
 
-            user_id = (await setup_user(database))[0]
+            user_id = await setup_user(database)
             account_id = await setup_account(database, user_id)
 
             new_transaction = {
@@ -158,7 +118,8 @@ class TestRoutePostRoot(TestCase):
         async with get_test_client() as clients:
             client, database = clients
 
-            user_id, other_user = (await setup_user(database))
+            user_id = await setup_user(database, "user")
+            other_user = await setup_user(database, "other")
             other_account = await setup_account(database, other_user)
 
             new_transaction = {
@@ -188,7 +149,7 @@ class TestRouteGetRoot(TestCase):
             client, database = clients
 
             # insert some test transactions
-            user_id = (await setup_user(database))[0]
+            user_id = await setup_user(database)
             account_id = await setup_account(database, user_id)
             query = sql.SQL("""
                 INSERT INTO
@@ -235,6 +196,453 @@ class TestRouteGetRoot(TestCase):
                     with self.subTest(msg="Account ID is UUID"):
                         self.assertTrue(UUID(item["account_id"]))
 
+    async def test_filter_by_account(self) -> None:
+        """Requests can filter by account."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            # insert some test transactions
+            user_id = await setup_user(database)
+            account1 = await setup_account(database, user_id)
+            account2 = await setup_account(database, user_id)
+            query = sql.SQL("""
+                INSERT INTO
+                    transaction(amount, payee, description,
+                                timestamp, account_id)
+                VALUES
+                    (1.23, 'a payee', 'a description',
+                     {timestamp1}, {account1}),
+                    (1.23, 'a payee', 'a description',
+                     {timestamp1}, {account2});
+            """).format(
+                account1=sql.Literal(account1),
+                account2=sql.Literal(account2),
+                timestamp1=sql.Literal("2019-12-10T08:12-05:00"),
+            )
+            await database.connect()
+            await database.execute(query)
+            await database.disconnect()
+
+            response = await client.get(
+                f"{BASE_URL}?account_id={account1}",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            with self.subTest(
+                msg="Only returns Transactions belonging to requested Account."
+            ):
+                for transaction in response.json():
+                    self.assertEqual(transaction["account_id"], str(account1))
+
+    async def test_filter_payee(self) -> None:
+        """Requests can filter by payee."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            # insert some test transactions
+            user_id = await setup_user(database)
+            account1 = await setup_account(database, user_id)
+            query = sql.SQL("""
+                INSERT INTO
+                    transaction(amount, payee, description,
+                                timestamp, account_id)
+                VALUES
+                    (1.23, 'a payee', 'a description',
+                     {timestamp1}, {account1}),
+                    (1.23, 'someone else', 'a description',
+                     {timestamp1}, {account1});
+            """).format(
+                account1=sql.Literal(account1),
+                timestamp1=sql.Literal("2019-12-10T08:12-05:00"),
+            )
+            await database.connect()
+            await database.execute(query)
+            await database.disconnect()
+
+            response = await client.get(
+                f"{BASE_URL}?payee=a%20payee",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            with self.subTest(
+                msg="Only returns Transactions with matching payee."
+            ):
+                for transaction in response.json():
+                    self.assertEqual(transaction["payee"], str("a payee"))
+
+    async def test_filter_minimum_amount(self) -> None:
+        """Requests can filter by minimum amount."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            # insert some test transactions
+            user_id = await setup_user(database)
+            account1 = await setup_account(database, user_id)
+            query = sql.SQL("""
+                INSERT INTO
+                    transaction(amount, payee, description,
+                                timestamp, account_id)
+                VALUES
+                    (1.23, 'a payee', 'a description',
+                     {timestamp1}, {account1}),
+                    (0.23, 'a payee', 'a description',
+                     {timestamp1}, {account1});
+            """).format(
+                account1=sql.Literal(account1),
+                timestamp1=sql.Literal("2019-12-10T08:12-05:00"),
+            )
+            await database.connect()
+            await database.execute(query)
+            await database.disconnect()
+
+            response = await client.get(
+                f"{BASE_URL}?minimum_amount=1.00",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            with self.subTest(
+                    msg="Only returns Transactions >= to given amount."):
+                for transaction in response.json():
+                    self.assertGreaterEqual(transaction["amount"], 1)
+
+    async def test_filter_maximum_amount(self) -> None:
+        """Requests can filter by maximum amount."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            # insert some test transactions
+            user_id = await setup_user(database)
+            account1 = await setup_account(database, user_id)
+            query = sql.SQL("""
+                INSERT INTO
+                    transaction(amount, payee, description,
+                                timestamp, account_id)
+                VALUES
+                    (1.23, 'a payee', 'a description',
+                     {timestamp1}, {account1}),
+                    (0.23, 'a payee', 'a description',
+                     {timestamp1}, {account1});
+            """).format(
+                account1=sql.Literal(account1),
+                timestamp1=sql.Literal("2019-12-10T08:12-05:00"),
+            )
+            await database.connect()
+            await database.execute(query)
+            await database.disconnect()
+
+            response = await client.get(
+                f"{BASE_URL}?maximum_amount=1.00",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            with self.subTest(
+                    msg="Only returns Transactions >= to given amount."):
+                for transaction in response.json():
+                    self.assertLessEqual(transaction["amount"], 1)
+
+    async def test_filter_minumum_and_maximum_amount(self) -> None:
+        """Requests can filter by both minimum and maximum amount."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            # insert some test transactions
+            user_id = await setup_user(database)
+            account1 = await setup_account(database, user_id)
+            query = sql.SQL("""
+                INSERT INTO
+                    transaction(amount, payee, description,
+                                timestamp, account_id)
+                VALUES
+                    (1.23, 'a payee', 'a description',
+                     {timestamp1}, {account1}),
+                    (0.23, 'a payee', 'a description',
+                     {timestamp1}, {account1}),
+                    (-1.00, 'a payee', 'a description',
+                     {timestamp1}, {account1});
+            """).format(
+                account1=sql.Literal(account1),
+                timestamp1=sql.Literal("2019-12-10T08:12-05:00"),
+            )
+            await database.connect()
+            await database.execute(query)
+            await database.disconnect()
+
+            response = await client.get(
+                f"{BASE_URL}?minimum_amount=0.00&maximum_amount=1.00",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            with self.subTest(
+                msg="Only returns Transactions inclusive between amounts."
+            ):
+                body = response.json()
+                print(f"\n\nresponse body: {body}")
+                for transaction in body:
+                    with self.subTest(msg="Greater than/equal to minimum."):
+                        self.assertGreaterEqual(transaction["amount"], 0)
+                    with self.subTest(msg="Less than/equal to maximum."):
+                        self.assertLessEqual(transaction["amount"], 1)
+
+    async def test_filter_minimum_timestamp(self) -> None:
+        """Requests can filter by minimum timestamp."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            # insert some test transactions
+            user_id = await setup_user(database)
+            account1 = await setup_account(database, user_id)
+            query = sql.SQL("""
+                INSERT INTO
+                    transaction(amount, payee, description,
+                                timestamp, account_id)
+                VALUES
+                    (1, 'a payee', 'a description',
+                     {timestamp1}, {account1}),
+                    (1, 'a payee', 'a description',
+                     {timestamp2}, {account1});
+            """).format(
+                account1=sql.Literal(account1),
+                timestamp1=sql.Literal("2019-12-10T08:12-05:00"),
+                timestamp2=sql.Literal("2020-12-10T08:12-05:00"),
+            )
+            await database.connect()
+            await database.execute(query)
+            await database.disconnect()
+
+            after = "2020-01-01T00:00-00:00"
+            response = await client.get(
+                f"{BASE_URL}?after={after}",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            with self.subTest(
+                    msg="Only returns Transactions >= to given timestamp."):
+                for transaction in response.json():
+                    self.assertGreaterEqual(
+                        datetime.fromisoformat(transaction["timestamp"]),
+                        datetime.fromisoformat(after))
+
+    async def test_filter_maximum_timestamp(self) -> None:
+        """Requests can filter by maximum timestamp."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            # insert some test transactions
+            user_id = await setup_user(database)
+            account1 = await setup_account(database, user_id)
+            query = sql.SQL("""
+                INSERT INTO
+                    transaction(amount, payee, description,
+                                timestamp, account_id)
+                VALUES
+                    (1, 'a payee', 'a description',
+                     {timestamp1}, {account1}),
+                    (1, 'a payee', 'a description',
+                     {timestamp2}, {account1});
+            """).format(
+                account1=sql.Literal(account1),
+                timestamp1=sql.Literal("2019-12-10T08:12-05:00"),
+                timestamp2=sql.Literal("2020-12-10T08:12-05:00"),
+            )
+            await database.connect()
+            await database.execute(query)
+            await database.disconnect()
+
+            before = "2020-01-01T00:00-00:00"
+            response = await client.get(
+                f"{BASE_URL}?before={before}",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            with self.subTest(
+                    msg="Only returns Transactions >= to given timestamp."):
+                for transaction in response.json():
+                    self.assertLessEqual(
+                        datetime.fromisoformat(transaction["timestamp"]),
+                        datetime.fromisoformat(before))
+
+    async def test_filter_minumum_and_maximum_timestamp(self) -> None:
+        """Requests can filter by both minimum and maximum timestamp."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            # insert some test transactions
+            user_id = await setup_user(database)
+            account1 = await setup_account(database, user_id)
+            query = sql.SQL("""
+                INSERT INTO
+                    transaction(amount, payee, description,
+                                timestamp, account_id)
+                VALUES
+                    (1, 'a payee', 'a description',
+                     {timestamp1}, {account1}),
+                    (1, 'a payee', 'a description',
+                     {timestamp2}, {account1}),
+                    (1, 'a payee', 'a description',
+                     {timestamp3}, {account1});
+            """).format(
+                account1=sql.Literal(account1),
+                timestamp1=sql.Literal("2019-12-10T08:12-05:00"),
+                timestamp2=sql.Literal("2020-12-10T08:12-05:00"),
+                timestamp3=sql.Literal("2021-12-10T08:12-05:00"),
+            )
+            await database.connect()
+            await database.execute(query)
+            await database.disconnect()
+
+            after = "2020-01-01T00:00-00:00"
+            before = "2021-01-01T00:00-00:00"
+            response = await client.get(
+                f"{BASE_URL}?after={after}&before={before}",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            with self.subTest(
+                    msg="Only returns Transactions >= to given timestamp."):
+                for transaction in response.json():
+                    self.assertLessEqual(
+                        datetime.fromisoformat(transaction["timestamp"]),
+                        datetime.fromisoformat(before))
+            with self.subTest(
+                msg="Only returns Transactions inclusive between timestamps."
+            ):
+                body = response.json()
+                print(f"\n\nresponse body: {body}")
+                for transaction in body:
+                    with self.subTest(msg="Greater than/equal to minimum."):
+                        self.assertGreaterEqual(
+                            datetime.fromisoformat(transaction["timestamp"]),
+                            datetime.fromisoformat(after))
+                    with self.subTest(msg="Less than/equal to maximum."):
+                        self.assertLessEqual(
+                            datetime.fromisoformat(transaction["timestamp"]),
+                            datetime.fromisoformat(before))
+
+    async def test_pagination(self) -> None:
+        """Requests can be paginated with number of results & page number."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            # insert some test transactions
+            user_id = await setup_user(database)
+            account1 = await setup_account(database, user_id)
+            query = sql.SQL("""
+                INSERT INTO
+                    transaction(amount, payee, description,
+                                timestamp, account_id)
+                VALUES
+                    (1, 'a payee', 'a description',
+                     {timestamp0}, {account1}),
+                    (1, 'a payee', 'a description',
+                     {timestamp1}, {account1}),
+                    (1, 'a payee', 'a description',
+                     {timestamp2}, {account1}),
+                    (1, 'a payee', 'a description',
+                     {timestamp3}, {account1}),
+                    (1, 'a payee', 'a description',
+                     {timestamp4}, {account1}),
+                    (1, 'a payee', 'a description',
+                     {timestamp5}, {account1}),
+                    (1, 'a payee', 'a description',
+                     {timestamp6}, {account1}),
+                    (1, 'a payee', 'a description',
+                     {timestamp7}, {account1}),
+                    (1, 'a payee', 'a description',
+                     {timestamp8}, {account1}),
+                    (1, 'a payee', 'a description',
+                     {timestamp9}, {account1});
+            """).format(
+                account1=sql.Literal(account1),
+                timestamp0=sql.Literal("2019-12-10T08:12-05:00"),
+                timestamp1=sql.Literal("2019-12-10T08:13-05:00"),
+                timestamp2=sql.Literal("2019-12-10T08:14-05:00"),
+                timestamp3=sql.Literal("2019-12-10T08:15-05:00"),
+                timestamp4=sql.Literal("2019-12-10T08:16-05:00"),
+                timestamp5=sql.Literal("2019-12-10T08:17-05:00"),
+                timestamp6=sql.Literal("2019-12-10T08:18-05:00"),
+                timestamp7=sql.Literal("2019-12-10T08:19-05:00"),
+                timestamp8=sql.Literal("2019-12-10T08:20-05:00"),
+                timestamp9=sql.Literal("2019-12-10T08:21-05:00"),
+            )
+            await database.connect()
+            await database.execute(query)
+            await database.disconnect()
+
+            limit = 5
+            page1 = 0
+            response1 = await client.get(
+                f"{BASE_URL}?limit={limit}&page={page1}",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response1.status_code)
+
+            with self.subTest(
+                msg="Responds with number of Transactions specified by limit."
+            ):
+                body1 = response1.json()
+
+                self.assertEqual(len(body1), limit)
+
+            with self.subTest(
+                    msg=f"Can get next {limit} Transactions using page."):
+                page2 = 1
+                response2 = await client.get(
+                    f"{BASE_URL}?limit={limit}&page={page2}",
+                    headers={
+                        **get_token_header(user_id),
+                        "accept": "application/json"})
+                body2 = response2.json()
+
+                first_page = [tran1["id"] for tran1 in body1]
+
+                for tran in body2:
+                    with self.subTest():
+                        self.assertNotIn(tran["id"], first_page)
+
 
 class TestRoutePutId(TestCase):
     """Tests for `PUT /transaction/{id}`."""
@@ -245,7 +653,7 @@ class TestRoutePutId(TestCase):
             client, database = clients
 
             # insert some test transactions
-            user_id = (await setup_user(database))[0]
+            user_id = await setup_user(database)
             account_id = await setup_account(database, user_id)
             query = sql.SQL("""
                 INSERT INTO
@@ -301,7 +709,8 @@ class TestRoutePutId(TestCase):
         async with get_test_client() as clients:
             client, database = clients
 
-            user_id, other_user = (await setup_user(database))
+            user_id = await setup_user(database, "user")
+            other_user = await setup_user(database, "other")
             other_account = await setup_account(database, other_user)
             query = sql.SQL("""
                 INSERT INTO
@@ -340,7 +749,7 @@ class TestRouteDeleteId(TestCase):
             client, database = clients
 
             # insert some test transactions
-            user_id = (await setup_user(database))[0]
+            user_id = await setup_user(database)
             account_id = await setup_account(database, user_id)
             query = sql.SQL("""
                 INSERT INTO
@@ -371,7 +780,8 @@ class TestRouteDeleteId(TestCase):
         async with get_test_client() as clients:
             client, database = clients
 
-            user_id, other_user = (await setup_user(database))
+            user_id = await setup_user(database, "user")
+            other_user = await setup_user(database, "other")
             other_account = await setup_account(database, other_user)
             query = sql.SQL("""
                 INSERT INTO
