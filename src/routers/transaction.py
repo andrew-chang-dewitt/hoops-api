@@ -100,7 +100,7 @@ def create_transaction(config: Config, database: Client) -> APIRouter:
         before: Optional[datetime] = default_before,
         limit: Optional[int] = default_limit,
         page: Optional[int] = default_page,
-        sort: Optional[int] = default_sort,
+        sort: Optional[str] = default_sort,
     ) -> List[TransactionOut]:
         """Get all Transactions."""
         amount = a_b_both_or_none(minimum_amount,
