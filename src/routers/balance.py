@@ -27,7 +27,7 @@ def create_balance(config: Config, database: Client) -> APIRouter:
         summary="Get sum total Balance of all accounts for the current User."
     )
     async def get_root(user_id: UUID = Depends(auth_user)) -> Balance:
-        return await model.read.all_by_user(user_id)
+        return await model.read.all_accounts_by_user(user_id)
 
     @balance.get(
         "/account/{account_id}",
@@ -38,6 +38,25 @@ def create_balance(config: Config, database: Client) -> APIRouter:
         account_id: UUID,
         user_id: UUID = Depends(auth_user)
     ) -> Balance:
-        return await model.read.one_by_account(account_id, user_id)
+        return await model.read.one_by_collection(account_id, user_id)
+
+    @balance.get(
+        "/envelope/{envelope_id}",
+        response_model=Balance,
+        summary="Get the balance of a given Envelope."
+    )
+    async def get_envelope(
+        envelope_id: UUID,
+        user_id: UUID = Depends(auth_user)
+    ) -> Balance:
+        return await model.read.one_by_collection(envelope_id, user_id)
+
+    @balance.get(
+        "/available",
+        response_model=Balance,
+        summary="Get the Available Balance."
+    )
+    async def get_available(user_id: UUID = Depends(auth_user)) -> Balance:
+        return await model.read.all_minus_allocated(user_id)
 
     return balance

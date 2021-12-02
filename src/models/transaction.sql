@@ -6,5 +6,6 @@ CREATE TABLE IF NOT EXISTS "transaction" (
     "description" TEXT,
     "payee" TEXT NOT NULL,
     "timestamp" TIMESTAMPTZ NOT NULL,
-    "account_id" UUID NOT NULL
+    "account_id" UUID NOT NULL,
+    "spent_from" UUID 
 );
