@@ -32,6 +32,7 @@ class TransactionBase(Base):
     payee: str
     timestamp: datetime
     account_id: UUID
+    spent_from: Optional[UUID]
 
 
 class TransactionIn(TransactionBase):
@@ -54,6 +55,7 @@ class TransactionChanges(Base):
     payee: Optional[str]
     timestamp: Optional[datetime]
     account_id: Optional[UUID]
+    spent_from: Optional[UUID]
 
 
 class TransactionCreator(AsyncCreate[TransactionOut]):
