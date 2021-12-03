@@ -143,7 +143,7 @@ UI Design - API Reference
 This app is the back-end REST API serving JSON only, with the User being a Client consuming the API over HTTPS.
 This means the UI is a series of API endpoints used to achieve the stories written above in the [Use Case Analysis](#use-case-analysis) section.
 
-> *NOTE:* This section still needs to be expanded to full documentation for the API by creating an exhaustive list of API endpoints, accepted arguments (POST body, query args, or URI args), & endpoint return schema.
+See static documentation [at ./DOCS.md](/DOCS.md) or interactive documentation by running live site & navigating to [localhost:8000/docs](localhost:8000/docs).
 
 
 Algorithm
