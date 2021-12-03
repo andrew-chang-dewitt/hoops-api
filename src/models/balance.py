@@ -94,8 +94,6 @@ class BalanceReader:
             user_id=sql.Literal(user_id))
         query_result = await self._client.execute_and_return(query)
 
-        print(f"query result: {query_result}")
-
         return Balance(**query_result[0])
 
 

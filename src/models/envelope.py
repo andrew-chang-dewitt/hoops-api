@@ -39,6 +39,7 @@ class EnvelopeChanges(Base):
     """Fields used when updating an Envelope, all are optional."""
 
     name: Optional[str]
+    total_funds: Optional[Amount]
 
 
 class EnvelopeCreator(AsyncCreate[EnvelopeOut]):

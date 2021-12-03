@@ -15,14 +15,14 @@ CREATE VIEW account_balance AS
 
 CREATE VIEW envelope_balance AS
     SELECT
-        e.total_funds + sum(t.amount) AS amount,
+        e.total_funds + coalesce(sum(t.amount), 0) AS amount,
         e.name AS collection,
         e.id AS collection_id,
         'envelope' as collection_type,
         e.user_id AS user_id
     FROM
         envelope as e
-    INNER JOIN
+    LEFT JOIN
         transaction AS t on t.spent_from = e.id
     GROUP BY
         e.total_funds,
