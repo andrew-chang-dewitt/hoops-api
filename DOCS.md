@@ -1,22 +1,6 @@
----
-title: FastAPI v0.1.0
-language_tabs:
-  - python: Python
-language_clients:
-  - python: ""
-toc_footers: []
-includes: []
-search: true
-highlight_theme: darkula
-headingLevel: 2
-
----
-
-<!-- Generator: Widdershins v4.0.1 -->
-
 <h1 id="fastapi">FastAPI v0.1.0</h1>
 
-> Scroll down for code samples, example requests and responses. Select a language for code samples from the tabs above or the mobile navigation menu.
+Scroll down for code samples, example requests and responses.
 
 # Authentication
 
@@ -26,16 +10,13 @@ headingLevel: 2
 
     - Token URL = [token](token)
 
-|Scope|Scope Description|
-|---|---|
-
 <h1 id="fastapi-api-status">API Status</h1>
 
 ## Check API status.
 
 <a id="opIdroot__get"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -53,7 +34,7 @@ print(r.json())
 
 Check API status.
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -80,7 +61,7 @@ This operation does not require authentication
 
 <a id="opIdget_user_user_get"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -99,7 +80,7 @@ print(r.json())
 
 Get the current user's information.
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -127,7 +108,7 @@ OAuth2PasswordBearer
 
 <a id="opIdput_user_user_put"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -147,7 +128,7 @@ print(r.json())
 
 Update the current user's information.
 
-> Body parameter
+### Body parameter
 
 ```json
 {
@@ -163,7 +144,7 @@ Update the current user's information.
 |---|---|---|---|---|
 |body|body|[UserChanges](#schemauserchanges)|true|none|
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -192,7 +173,7 @@ OAuth2PasswordBearer
 
 <a id="opIdpost_user_user_post"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -211,7 +192,7 @@ print(r.json())
 
 Save a new User to the database & return the new information.
 
-> Body parameter
+### Body parameter
 
 ```json
 {
@@ -228,7 +209,7 @@ Save a new User to the database & return the new information.
 |---|---|---|---|---|
 |body|body|[UserIn](#schemauserin)|true|none|
 
-> Example responses
+### Example responses
 
 > 201 Response
 
@@ -256,7 +237,7 @@ This operation does not require authentication
 
 <a id="opIddelete_user_user_delete"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -275,7 +256,7 @@ print(r.json())
 
 Delete the current user from the database.
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -303,7 +284,7 @@ OAuth2PasswordBearer
 
 <a id="opIdput_password_user_password_put"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -323,7 +304,7 @@ print(r.json())
 
 Update the current user's password.
 
-> Body parameter
+### Body parameter
 
 ```json
 "string"
@@ -335,7 +316,7 @@ Update the current user's password.
 |---|---|---|---|---|
 |body|body|string|true|none|
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -366,7 +347,7 @@ OAuth2PasswordBearer
 
 <a id="opIdpost_token_post"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -385,7 +366,7 @@ print(r.json())
 
 POST `/token` handler.
 
-> Body parameter
+### Body parameter
 
 ```yaml
 grant_type: string
@@ -403,7 +384,7 @@ client_secret: string
 |---|---|---|---|---|
 |body|body|[Body_post_token_post](#schemabody_post_token_post)|true|none|
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -431,7 +412,7 @@ This operation does not require authentication
 
 <a id="opIdget_account_get"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -450,7 +431,7 @@ print(r.json())
 
 Read all open accounts for given User.
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -495,7 +476,7 @@ OAuth2PasswordBearer
 
 <a id="opIdpost_account_post"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -515,7 +496,7 @@ print(r.json())
 
 Create a new account for given User.
 
-> Body parameter
+### Body parameter
 
 ```json
 {
@@ -529,7 +510,7 @@ Create a new account for given User.
 |---|---|---|---|---|
 |body|body|[AccountIn](#schemaaccountin)|true|none|
 
-> Example responses
+### Example responses
 
 > 201 Response
 
@@ -558,7 +539,7 @@ OAuth2PasswordBearer
 
 <a id="opIdput_id_account__account_id__put"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -578,7 +559,7 @@ print(r.json())
 
 Update the given account with the given changes.
 
-> Body parameter
+### Body parameter
 
 ```json
 {
@@ -594,7 +575,7 @@ Update the given account with the given changes.
 |account_id|path|string(uuid)|true|none|
 |body|body|[AccountChanges](#schemaaccountchanges)|true|none|
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -623,7 +604,7 @@ OAuth2PasswordBearer
 
 <a id="opIdput_closed_account__account_id__closed_put"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -648,7 +629,7 @@ Mark the given account as closed.
 |---|---|---|---|---|
 |account_id|path|string(uuid)|true|none|
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -677,7 +658,7 @@ OAuth2PasswordBearer
 
 <a id="opIdget_closed_account_closed_get"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -696,7 +677,7 @@ print(r.json())
 
 Mark the given account as closed.
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -743,7 +724,7 @@ OAuth2PasswordBearer
 
 <a id="opIdget_root_transaction_get"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -776,7 +757,7 @@ Get all Transactions.
 |page|query|integer|false|Return given page of Transactions.|
 |sort|query|string|false|Sort Transactions by given column.|
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -828,7 +809,7 @@ OAuth2PasswordBearer
 
 <a id="opIdpost_root_transaction_post"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -848,7 +829,7 @@ print(r.json())
 
 Save given Transaction to database.
 
-> Body parameter
+### Body parameter
 
 ```json
 {
@@ -867,7 +848,7 @@ Save given Transaction to database.
 |---|---|---|---|---|
 |body|body|[TransactionIn](#schematransactionin)|true|none|
 
-> Example responses
+### Example responses
 
 > 201 Response
 
@@ -899,7 +880,7 @@ OAuth2PasswordBearer
 
 <a id="opIdput_id_transaction__transaction_id__put"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -919,7 +900,7 @@ print(r.json())
 
 Edit the given Transaction.
 
-> Body parameter
+### Body parameter
 
 ```json
 {
@@ -939,7 +920,7 @@ Edit the given Transaction.
 |transaction_id|path|string(uuid)|true|none|
 |body|body|[TransactionChanges](#schematransactionchanges)|true|none|
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -971,7 +952,7 @@ OAuth2PasswordBearer
 
 <a id="opIddelete_id_transaction__transaction_id__delete"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -996,7 +977,7 @@ Delete the given Transaction.
 |---|---|---|---|---|
 |transaction_id|path|string(uuid)|true|none|
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -1030,7 +1011,7 @@ OAuth2PasswordBearer
 
 <a id="opIdget_root_balance_total_get"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -1047,7 +1028,7 @@ print(r.json())
 
 `GET /balance/total`
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -1076,7 +1057,7 @@ OAuth2PasswordBearer
 
 <a id="opIdget_account_balance_account__account_id__get"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -1099,7 +1080,7 @@ print(r.json())
 |---|---|---|---|---|
 |account_id|path|string(uuid)|true|none|
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -1129,7 +1110,7 @@ OAuth2PasswordBearer
 
 <a id="opIdget_envelope_balance_envelope__envelope_id__get"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -1152,7 +1133,7 @@ print(r.json())
 |---|---|---|---|---|
 |envelope_id|path|string(uuid)|true|none|
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -1182,7 +1163,7 @@ OAuth2PasswordBearer
 
 <a id="opIdget_available_balance_available_get"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -1199,7 +1180,7 @@ print(r.json())
 
 `GET /balance/available`
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -1230,7 +1211,7 @@ OAuth2PasswordBearer
 
 <a id="opIdget_root_envelope_get"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -1247,7 +1228,7 @@ print(r.json())
 
 `GET /envelope`
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -1292,7 +1273,7 @@ OAuth2PasswordBearer
 
 <a id="opIdpost_root_envelope_post"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -1310,7 +1291,7 @@ print(r.json())
 
 `POST /envelope`
 
-> Body parameter
+### Body parameter
 
 ```json
 {
@@ -1324,7 +1305,7 @@ print(r.json())
 |---|---|---|---|---|
 |body|body|[EnvelopeIn](#schemaenvelopein)|true|none|
 
-> Example responses
+### Example responses
 
 > 201 Response
 
@@ -1353,7 +1334,7 @@ OAuth2PasswordBearer
 
 <a id="opIdget_id_envelope__envelope_id__get"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -1376,7 +1357,7 @@ print(r.json())
 |---|---|---|---|---|
 |envelope_id|path|string(uuid)|true|none|
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -1405,7 +1386,7 @@ OAuth2PasswordBearer
 
 <a id="opIdput_id_envelope__envelope_id__put"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -1423,7 +1404,7 @@ print(r.json())
 
 `PUT /envelope/{envelope_id}`
 
-> Body parameter
+### Body parameter
 
 ```json
 {
@@ -1439,7 +1420,7 @@ print(r.json())
 |envelope_id|path|string(uuid)|true|none|
 |body|body|[EnvelopeChanges](#schemaenvelopechanges)|true|none|
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -1468,7 +1449,7 @@ OAuth2PasswordBearer
 
 <a id="opIdput_funds_envelope__envelope_id__funds__amount__put"></a>
 
-> Code samples
+### Code samples
 
 ```python
 import requests
@@ -1494,7 +1475,7 @@ print(r.json())
 |source|query|string(uuid)|false|Where take funds from; default: Available Balance.|
 |out|query|boolean|false|Move funds out of this Envelope.|
 
-> Example responses
+### Example responses
 
 > 200 Response
 
@@ -1522,7 +1503,7 @@ OAuth2PasswordBearer
 # Schemas
 
 <h2 id="tocS_AccountChanges">AccountChanges</h2>
-<!-- backwards compatibility -->
+
 <a id="schemaaccountchanges"></a>
 <a id="schema_AccountChanges"></a>
 <a id="tocSaccountchanges"></a>
@@ -1546,7 +1527,7 @@ AccountChanges
 |closed|boolean|false|none|none|
 
 <h2 id="tocS_AccountIn">AccountIn</h2>
-<!-- backwards compatibility -->
+
 <a id="schemaaccountin"></a>
 <a id="schema_AccountIn"></a>
 <a id="tocSaccountin"></a>
@@ -1568,7 +1549,7 @@ AccountIn
 |name|string|true|none|none|
 
 <h2 id="tocS_AccountOut">AccountOut</h2>
-<!-- backwards compatibility -->
+
 <a id="schemaaccountout"></a>
 <a id="schema_AccountOut"></a>
 <a id="tocSaccountout"></a>
@@ -1596,7 +1577,7 @@ AccountOut
 |closed|boolean|true|none|none|
 
 <h2 id="tocS_Balance">Balance</h2>
-<!-- backwards compatibility -->
+
 <a id="schemabalance"></a>
 <a id="schema_Balance"></a>
 <a id="tocSbalance"></a>
@@ -1650,7 +1631,7 @@ continued
 |*anonymous*|envelope|
 
 <h2 id="tocS_Body_post_token_post">Body_post_token_post</h2>
-<!-- backwards compatibility -->
+
 <a id="schemabody_post_token_post"></a>
 <a id="schema_Body_post_token_post"></a>
 <a id="tocSbody_post_token_post"></a>
@@ -1682,7 +1663,7 @@ Body_post_token_post
 |client_secret|string|false|none|none|
 
 <h2 id="tocS_EnvelopeChanges">EnvelopeChanges</h2>
-<!-- backwards compatibility -->
+
 <a id="schemaenvelopechanges"></a>
 <a id="schema_EnvelopeChanges"></a>
 <a id="tocSenvelopechanges"></a>
@@ -1706,7 +1687,7 @@ EnvelopeChanges
 |total_funds|number|false|none|none|
 
 <h2 id="tocS_EnvelopeIn">EnvelopeIn</h2>
-<!-- backwards compatibility -->
+
 <a id="schemaenvelopein"></a>
 <a id="schema_EnvelopeIn"></a>
 <a id="tocSenvelopein"></a>
@@ -1728,7 +1709,7 @@ EnvelopeIn
 |name|string|true|none|none|
 
 <h2 id="tocS_EnvelopeOut">EnvelopeOut</h2>
-<!-- backwards compatibility -->
+
 <a id="schemaenvelopeout"></a>
 <a id="schema_EnvelopeOut"></a>
 <a id="tocSenvelopeout"></a>
@@ -1756,7 +1737,7 @@ EnvelopeOut
 |total_funds|number|true|none|none|
 
 <h2 id="tocS_HTTPValidationError">HTTPValidationError</h2>
-<!-- backwards compatibility -->
+
 <a id="schemahttpvalidationerror"></a>
 <a id="schema_HTTPValidationError"></a>
 <a id="tocShttpvalidationerror"></a>
@@ -1786,7 +1767,7 @@ HTTPValidationError
 |detail|[[ValidationError](#schemavalidationerror)]|false|none|none|
 
 <h2 id="tocS_Status">Status</h2>
-<!-- backwards compatibility -->
+
 <a id="schemastatus"></a>
 <a id="schema_Status"></a>
 <a id="tocSstatus"></a>
@@ -1810,7 +1791,7 @@ Status
 |ok|boolean|true|none|none|
 
 <h2 id="tocS_Token">Token</h2>
-<!-- backwards compatibility -->
+
 <a id="schematoken"></a>
 <a id="schema_Token"></a>
 <a id="tocStoken"></a>
@@ -1834,7 +1815,7 @@ Token
 |token_type|string|false|none|none|
 
 <h2 id="tocS_TransactionChanges">TransactionChanges</h2>
-<!-- backwards compatibility -->
+
 <a id="schematransactionchanges"></a>
 <a id="schema_TransactionChanges"></a>
 <a id="tocStransactionchanges"></a>
@@ -1866,7 +1847,7 @@ TransactionChanges
 |spent_from|string(uuid)|false|none|none|
 
 <h2 id="tocS_TransactionIn">TransactionIn</h2>
-<!-- backwards compatibility -->
+
 <a id="schematransactionin"></a>
 <a id="schema_TransactionIn"></a>
 <a id="tocStransactionin"></a>
@@ -1898,7 +1879,7 @@ TransactionIn
 |spent_from|string(uuid)|false|none|none|
 
 <h2 id="tocS_TransactionOut">TransactionOut</h2>
-<!-- backwards compatibility -->
+
 <a id="schematransactionout"></a>
 <a id="schema_TransactionOut"></a>
 <a id="tocStransactionout"></a>
@@ -1932,7 +1913,7 @@ TransactionOut
 |spent_from|string(uuid)|false|none|none|
 
 <h2 id="tocS_UserChanges">UserChanges</h2>
-<!-- backwards compatibility -->
+
 <a id="schemauserchanges"></a>
 <a id="schema_UserChanges"></a>
 <a id="tocSuserchanges"></a>
@@ -1958,7 +1939,7 @@ UserChanges
 |preferred_name|string|false|none|none|
 
 <h2 id="tocS_UserIn">UserIn</h2>
-<!-- backwards compatibility -->
+
 <a id="schemauserin"></a>
 <a id="schema_UserIn"></a>
 <a id="tocSuserin"></a>
@@ -1986,7 +1967,7 @@ UserIn
 |password|string|true|none|none|
 
 <h2 id="tocS_UserOut">UserOut</h2>
-<!-- backwards compatibility -->
+
 <a id="schemauserout"></a>
 <a id="schema_UserOut"></a>
 <a id="tocSuserout"></a>
@@ -2014,7 +1995,7 @@ UserOut
 |preferred_name|string|true|none|none|
 
 <h2 id="tocS_ValidationError">ValidationError</h2>
-<!-- backwards compatibility -->
+
 <a id="schemavalidationerror"></a>
 <a id="schema_ValidationError"></a>
 <a id="tocSvalidationerror"></a>
