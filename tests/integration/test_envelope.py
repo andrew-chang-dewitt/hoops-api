@@ -430,7 +430,7 @@ class TestRoutePutFunds(TestCase):
             amount = 5
             response = await client.put(
                 f"{BASE_URL}/{to_envelope}/funds/{amount}" +
-                f"?source={from_envelope}",
+                f"?other={from_envelope}",
                 headers={
                     **get_token_header(user_id),
                     "accept": "application/json"})
@@ -459,7 +459,7 @@ class TestRoutePutFunds(TestCase):
                 amount = 11
                 response = await client.put(
                     f"{BASE_URL}/{to_envelope}/funds/{amount}" +
-                    f"?source={from_envelope}",
+                    f"?other={from_envelope}",
                     headers={
                         **get_token_header(user_id),
                         "accept": "application/json"})

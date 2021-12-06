@@ -78,9 +78,12 @@ def create_envelope(config: Config, database: Client) -> APIRouter:
     ) -> EnvelopeOut:
         return await model.update.changes(envelope_id, user_id, changes)
 
-    default_source = Query(
+    default_other = Query(
         None,
         description="Where take funds from; default: Available Balance.")
+    default_out = Query(
+        False,
+        description="Move funds out of this Envelope.")
 
     @envelope.put(
         "/{envelope_id}/funds/{amount}",
@@ -90,30 +93,48 @@ def create_envelope(config: Config, database: Client) -> APIRouter:
     async def put_funds(
         envelope_id: UUID,
         amount: Amount,
-        source: Optional[UUID] = default_source,
+        other: Optional[UUID] = default_other,
+        out: Optional[bool] = default_out,
         user_id: UUID = Depends(auth_user),
     ) -> EnvelopeOut:
-        # get source balance
-        if source is None:
-            source_balance = \
+        # FIXME: rewrite using move_funds from src.lib
+        # needs other & target redetermined using out as well
+        # then will need to call necessary db methods to write results
+        # to database
+
+        # get other balance
+        if other is None:
+            other_balance = \
                 await balance_model.read.all_minus_allocated(user_id)
 
         else:
-            source_balance = \
-                await balance_model.read.one_by_collection(source, user_id)
+            other_balance = \
+                await balance_model.read.one_by_collection(other, user_id)
 
-        # calculate new source balance & check if enough funds in source
-        new_source_amount = source_balance.amount - amount
+        # name origin & target for moving funds based on `out`
+        if out:
+            origin = {"amount": amount,
+                      "id": envelope_id, }
+            target = {"amount": other_balance.amount,
+                      "id": other, }
+        else:
+            origin = {"amount": other_balance.amount,
+                      "id": other, }
+            target = {"amount": amount,
+                      "id": envelope_id, }
 
-        if new_source_amount < 0:
+        # calculate new other balance & check if enough funds in other
+        new_origin_amount = origin["amount"] - target["amount"]
+
+        if new_origin_amount < 0:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Not enough funds available in source.")
+                detail="Not enough funds available in origin.")
 
-        # if source is envelope, update source balance
-        if source is not None:
-            new_source = EnvelopeChanges(total_funds=new_source_amount)
-            await model.update.changes(source, user_id, new_source)
+        # if other is envelope, update other balance
+        if other is not None:
+            new_other = EnvelopeChanges(total_funds=new_origin_amount)
+            await model.update.changes(other, user_id, new_other)
 
         # get current envelope data & calculate new funds value
         existing = await model.read.one(envelope_id, user_id)
