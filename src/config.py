@@ -3,17 +3,16 @@
 import os
 from dataclasses import dataclass
 
-from dotenv import load_dotenv
-
 from .database import create_conn_config, ConnectionParameters
 
 
-load_dotenv(".secrets")
-
+def _get_app_key_from_file() -> str:
+    with open("/run/secrets/app_key", "r") as key_file:
+        return str(key_file.readline())
 
 def get_app_key() -> str:
     """Get application key from environment."""
-    key = os.getenv("APP_KEY")
+    key = os.getenv("APP_KEY", _get_app_key_from_file())
 
     if not key:
         raise ValueError("An APP_KEY environment variable is required.")
