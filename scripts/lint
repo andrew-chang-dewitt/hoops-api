@@ -23,7 +23,7 @@ eval "$(direnv export bash)"
 function lint {
     echo ""
     echo "PYLINT"
-    pylint hoops/*
+    pylint src/*
     lint_result=$?
     echo ""
 }
@@ -31,7 +31,7 @@ function lint {
 function code {
     echo ""
     echo "PYCODESTYLE"
-    pycodestyle hoops/*
+    pycodestyle src/*
     code_result=$?
     echo ""
 }
@@ -39,7 +39,7 @@ function code {
 function doc {
     echo ""
     echo "PYDOCSTYLE"
-    pydocstyle hoops/*
+    pydocstyle src/*
     doc_result=$?
     echo ""
 }

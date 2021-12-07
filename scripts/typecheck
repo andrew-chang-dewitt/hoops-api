@@ -24,9 +24,9 @@ function check {
     echo "Starting type checks..."
     echo ""
 
-    echo "Checking ./hoops..."
+    echo "Checking ./src..."
     echo ""
-    mypy hoops
+    mypy src
     mypy_src_result=$?
 
     echo ""
