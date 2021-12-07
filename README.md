@@ -71,6 +71,7 @@ Data models are defined in SQL files & loaded into the database on application i
 
 ### Module structure
 
+```
 src
 ├── __init__.py
 ├── app.py
@@ -120,6 +121,7 @@ src
 │   └── user.py
 └── security.py
       ^ *functions for creating & authenticating JWT are here*
+```
 
 
 UI Design - API Reference
