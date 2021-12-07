@@ -14,4 +14,4 @@ RUN pip install -r requirements.txt
 ENTRYPOINT ["python"]
 # tell fastapi to use 0.0.0.0 instead of localhost to allow
 # connections from outside docker container
-CMD ["-m", "uvicorn", "src:app", "--host=0.0.0.0", "--port=3000"]
+CMD ["-m", "uvicorn", "src:app", "--host=0.0.0.0", "--port=4000"]

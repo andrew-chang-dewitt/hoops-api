@@ -6,7 +6,7 @@ services:
   app:
     build: .
     ports:
-      - 3000:3000
+      - 4000:4000
     environment:
       DB_HOST: db
       DB_PORT: 5432

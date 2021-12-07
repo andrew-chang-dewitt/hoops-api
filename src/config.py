@@ -7,7 +7,8 @@ from .database import create_conn_config, ConnectionParameters
 
 
 def _get_app_key_from_file() -> str:
-    with open("/run/secrets/app_key", "r") as key:
+    with open("/run/secrets/app_key", "r") as key_file:
+        key = str(key_file.readline())
         print(f"app_key from file: {key}")
         return key
 
