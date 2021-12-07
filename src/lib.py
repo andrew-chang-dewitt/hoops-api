@@ -3,9 +3,9 @@
 from typing import Optional, Tuple, Union
 
 from src.models.amount import Amount
-from src.models import Balance, EnvelopeOut
+from src.models import Balance, EnvelopeChanges
 
-FundsHolder = Union[Balance, EnvelopeOut]
+FundsHolder = Union[Balance, EnvelopeChanges]
 
 
 def _get_balance(item: FundsHolder) -> Amount:
@@ -13,21 +13,10 @@ def _get_balance(item: FundsHolder) -> Amount:
     return item.amount if isinstance(item, Balance) else item.total_funds
 
 
-class NotEnough(Exception):
-
-    def __init__(self, funds: Amount, source: Amount) -> None:
-        super().__init__(f"Not enough funds in {source} to remove {funds}.")
-
-
 def _remove_funds(funds: Amount, source: Amount) -> Amount:
     """Safely subtract Funds from Source."""
     # subtract funds from source
     new_amount = source - funds
-
-    # check enough
-    if new_amount < 0:
-        # if no, raise NotEnough
-        raise NotEnough(funds=funds, source=source)
 
     # else, return new source balance
     return Amount(new_amount)
@@ -41,10 +30,10 @@ def _add_funds(funds: Amount, target: Amount) -> Amount:
 def _build_funds_holder(
     balance: Amount,
     original_item: FundsHolder,
-) -> Optional[EnvelopeOut]:
+) -> Optional[EnvelopeChanges]:
     """Create Envelope if Envelope, else None."""
-    if isinstance(original_item, EnvelopeOut):
-        return EnvelopeOut(**{
+    if isinstance(original_item, EnvelopeChanges):
+        return EnvelopeChanges(**{
             **original_item.dict(),
             "total_funds": balance
         })
@@ -56,7 +45,7 @@ def move_funds(
     amount: Amount,
     src: FundsHolder,
     target: FundsHolder
-) -> Tuple[Optional[EnvelopeOut], Optional[EnvelopeOut]]:
+) -> Tuple[Optional[EnvelopeChanges], Optional[EnvelopeChanges]]:
     """Move amount of funds from source to target & return new objects."""
     # get balances of src & target
     src_bal = _get_balance(src)

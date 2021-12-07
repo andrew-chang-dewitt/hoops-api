@@ -322,7 +322,41 @@ class TestRoutePutId(TestCase):
 
     async def test_can_not_update_funds(self) -> None:
         """Funds must be updated via `.../funds/{amount}` endpoint."""
-        self.assertTrue(False, "Not yet implemented.")
+        async with get_test_client() as clients:
+            client, database = clients
+
+            user_id = await setup_user(database, "first")
+
+            add_envelope_query = sql.SQL("""
+                INSERT INTO envelope
+                    (name, total_funds, user_id)
+                VALUES
+                    ('envelope', 1.00, {user_id})
+                RETURNING
+                    id;
+            """).format(
+                user_id=sql.Literal(user_id))
+
+            await database.connect()
+            query_result = \
+                await database.execute_and_return(add_envelope_query)
+            await database.disconnect()
+            envelope_id = query_result[0]["id"]
+
+            changes = {"total_funds": 100000}
+
+            response = await client.put(
+                f"{BASE_URL}/{envelope_id}",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"},
+                json=changes)
+
+            print(response.request.url)
+
+            with self.subTest(
+                    msg="Responds with a status code of 404."):
+                self.assertEqual(422, response.status_code)
 
 
 class TestRoutePutFunds(TestCase):
@@ -454,17 +488,112 @@ class TestRoutePutFunds(TestCase):
 
                 self.assertEqual(query_result[0]["total_funds"], 5)
 
-            with self.subTest(
-                    msg="Can not move funds if not enough are available."):
-                amount = 11
-                response = await client.put(
-                    f"{BASE_URL}/{to_envelope}/funds/{amount}" +
-                    f"?other={from_envelope}",
-                    headers={
-                        **get_token_header(user_id),
-                        "accept": "application/json"})
+    async def test_negative_funds_sends_from_envelope_to_other(self) -> None:
+        """Moving negative funds takes from given envelope & gives to other."""
+        async with get_test_client() as clients:
+            client, database = clients
 
-                self.assertEqual(response.status_code, 409)
+            user_id = await setup_user(database, "first")
+            account_id = await setup_account(database, user_id)
+            await setup_transactions(database, [Decimal(10)], account_id)
+
+            add_envelopes_query = sql.SQL("""
+                INSERT INTO envelope
+                    (name, total_funds, user_id)
+                VALUES
+                    ('envelope', 10.00, {user_id}),
+                    ('other', 0.00, {user_id})
+                RETURNING
+                    id, name;
+            """).format(
+                user_id=sql.Literal(user_id))
+
+            await database.connect()
+            query_result = \
+                await database.execute_and_return(add_envelopes_query)
+            await database.disconnect()
+
+            for result in query_result:
+                if result["name"] == "envelope":
+                    envelope = result["id"]
+                if result["name"] == "other":
+                    other = result["id"]
+
+            amount = -5
+            response = await client.put(
+                f"{BASE_URL}/{envelope}/funds/{amount}" +
+                f"?other={other}",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            with self.subTest(
+                    msg="Source Envelope is updated in database."):
+                query = sql.SQL("""
+                    SELECT total_funds
+                    FROM envelope
+                    WHERE id = {envelope};
+                """).format(
+                    envelope=sql.Literal(envelope))
+
+                await database.connect()
+                query_result = await database.execute_and_return(query)
+                await database.disconnect()
+
+                self.assertEqual(query_result[0]["total_funds"], 5)
+
+            with self.subTest(
+                    msg="Other Envelope is updated in database."):
+                query = sql.SQL("""
+                    SELECT total_funds
+                    FROM envelope
+                    WHERE id = {other};
+                """).format(
+                    other=sql.Literal(other))
+
+                await database.connect()
+                query_result = await database.execute_and_return(query)
+                await database.disconnect()
+
+                self.assertEqual(query_result[0]["total_funds"], 5)
+
+    async def test_can_not_move_funds_if_not_envough_available(self) -> None:
+        """Can not move funds if not enough are available."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            user_id = await setup_user(database, "first")
+            account_id = await setup_account(database, user_id)
+            await setup_transactions(database, [Decimal(10)], account_id)
+
+            add_envelope_query = sql.SQL("""
+                INSERT INTO envelope
+                    (name, total_funds, user_id)
+                VALUES
+                    ('envelope', 0.00, {user_id})
+                RETURNING
+                    id;
+            """).format(
+                user_id=sql.Literal(user_id))
+
+            await database.connect()
+            query_result = \
+                await database.execute_and_return(add_envelope_query)
+            await database.disconnect()
+            envelope_id = query_result[0]["id"]
+
+            amount = 11
+            response = await client.put(
+                f"{BASE_URL}/{envelope_id}/funds/{amount}",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            self.assertEqual(response.status_code, 409)
 
 
 if __name__ == "__main__":

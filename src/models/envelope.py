@@ -1,5 +1,6 @@
 """DB Model for Envelope objects."""
 
+from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
@@ -39,7 +40,6 @@ class EnvelopeChanges(Base):
     """Fields used when updating an Envelope, all are optional."""
 
     name: Optional[str]
-    total_funds: Optional[Amount]
 
 
 class EnvelopeCreator(AsyncCreate[EnvelopeOut]):
@@ -143,6 +143,35 @@ class EnvelopeUpdater(AsyncUpdate[EnvelopeOut]):
             envelope_id=sql.Literal(envelope_id),
             user_id=sql.Literal(user_id),
         )
+        print(f"query: {query}")
+        query_result = await self._client.execute_and_return(query)
+        print(f"query_result: {query_result}")
+
+        try:
+            result = query_result[0]
+        except IndexError as err:
+            raise NoResultFound from err
+
+        return EnvelopeOut(**result)
+
+    async def sum_funds(
+        self,
+        funds: Decimal,
+        envelope_id: UUID,
+        user_id: UUID
+    ) -> EnvelopeOut:
+        """Sum given funds with the Envelope's total_funds."""
+        query = sql.SQL("""
+            UPDATE {table}
+            SET total_funds = total_funds + {funds}
+            WHERE id = {envelope_id}
+            AND user_id = {user_id}
+            RETURNING *;
+        """).format(
+            table=self._table,
+            funds=sql.Literal(funds),
+            envelope_id=sql.Literal(envelope_id),
+            user_id=sql.Literal(user_id))
         query_result = await self._client.execute_and_return(query)
 
         try:

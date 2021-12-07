@@ -1,6 +1,6 @@
 """Routes under `/envelope`."""
 
-from typing import List, Optional
+from typing import List, Optional, Union
 from uuid import UUID
 
 from fastapi import status, Depends, Query
@@ -9,7 +9,9 @@ from fastapi.routing import APIRouter
 
 from src.config import Config
 from src.database import Client
+from src.lib import FundsHolder, move_funds
 from src.models import (
+    Balance,
     BalanceModel,
     EnvelopeChanges,
     EnvelopeIn,
@@ -76,72 +78,60 @@ def create_envelope(config: Config, database: Client) -> APIRouter:
         changes: EnvelopeChanges,
         user_id: UUID = Depends(auth_user),
     ) -> EnvelopeOut:
-        return await model.update.changes(envelope_id, user_id, changes)
+        print(f"changes: {changes}")
+        try:
+            return await model.update.changes(envelope_id, user_id, changes)
+        except Exception as exc:
+            print(f"exc caught: {exc}")
+            raise Exception from exc
 
     default_other = Query(
         None,
         description="Where take funds from; default: Available Balance.")
-    default_out = Query(
-        False,
-        description="Move funds out of this Envelope.")
 
     @envelope.put(
-        "/{envelope_id}/funds/{amount}",
+        "/{envelope_id}/funds/{funds}",
         response_model=EnvelopeOut,
         summary="Add given funds to Envelope.",
     )
     async def put_funds(
         envelope_id: UUID,
-        amount: Amount,
+        funds: Amount,
         other: Optional[UUID] = default_other,
-        out: Optional[bool] = default_out,
         user_id: UUID = Depends(auth_user),
     ) -> EnvelopeOut:
-        # FIXME: rewrite using move_funds from src.lib
-        # needs other & target redetermined using out as well
-        # then will need to call necessary db methods to write results
-        # to database
+        """
+        Add funds to (or remove funds from, if given as a negative) envelope.
 
-        # get other balance
-        if other is None:
-            other_balance = \
-                await balance_model.read.all_minus_allocated(user_id)
+        Optionally, include source/target envelope for funds to be taken
+        from/sent to. Defaults to Available Balance if not given.
+        """
+        envelope_bal = await balance_model.read.one_by_collection(envelope_id,
+                                                                  user_id)
+        other_bal = \
+            await balance_model.read.one_by_collection(other, user_id) \
+            if other \
+            else await balance_model.read.all_minus_allocated(user_id)
 
-        else:
-            other_balance = \
-                await balance_model.read.one_by_collection(other, user_id)
+        # get balance of source
+        source_balance = envelope_bal if funds < 0 else other_bal
 
-        # name origin & target for moving funds based on `out`
-        if out:
-            origin = {"amount": amount,
-                      "id": envelope_id, }
-            target = {"amount": other_balance.amount,
-                      "id": other, }
-        else:
-            origin = {"amount": other_balance.amount,
-                      "id": other, }
-            target = {"amount": amount,
-                      "id": envelope_id, }
-
-        # calculate new other balance & check if enough funds in other
-        new_origin_amount = origin["amount"] - target["amount"]
-
-        if new_origin_amount < 0:
+        # short circuit route with failure message if not enough funds
+        # available to move
+        if source_balance.amount - funds < 0:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Not enough funds available in origin.")
+                detail="Not enough funds available in source.")
 
-        # if other is envelope, update other balance
-        if other is not None:
-            new_other = EnvelopeChanges(total_funds=new_origin_amount)
-            await model.update.changes(other, user_id, new_other)
+        # subtract funds from other, if it is an envelope, & save
+        if other:
+            await model.update.sum_funds(0 - funds,
+                                         other,
+                                         user_id)
 
-        # get current envelope data & calculate new funds value
-        existing = await model.read.one(envelope_id, user_id)
-        new_funds_amount = existing.total_funds + amount
-
-        # create changes object & save to db, returning result
-        funds_added = EnvelopeChanges(total_funds=new_funds_amount)
-        return await model.update.changes(envelope_id, user_id, funds_added)
+        # then add funds to this envelope, save, & return
+        return await model.update.sum_funds(funds,
+                                            envelope_id,
+                                            user_id)
 
     return envelope
