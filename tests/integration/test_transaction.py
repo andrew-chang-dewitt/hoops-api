@@ -13,7 +13,7 @@ from tests.helpers.application import (
     get_test_client,
     get_token_header,
 )
-from tests.helpers.database import setup_user, setup_account
+from tests.helpers.database import setup_user, setup_account, setup_envelope
 from src.database import Client
 
 BASE_URL = "/transaction"
@@ -401,7 +401,6 @@ class TestRouteGetRoot(TestCase):
                 msg="Only returns Transactions inclusive between amounts."
             ):
                 body = response.json()
-                print(f"\n\nresponse body: {body}")
                 for transaction in body:
                     with self.subTest(msg="Greater than/equal to minimum."):
                         self.assertGreaterEqual(transaction["amount"], 0)
@@ -547,7 +546,6 @@ class TestRouteGetRoot(TestCase):
                 msg="Only returns Transactions inclusive between timestamps."
             ):
                 body = response.json()
-                print(f"\n\nresponse body: {body}")
                 for transaction in body:
                     with self.subTest(msg="Greater than/equal to minimum."):
                         self.assertGreaterEqual(
@@ -799,6 +797,83 @@ class TestRouteDeleteId(TestCase):
 
             response = await client.delete(
                 f"{BASE_URL}/{tran_id}",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            self.assertEqual(403, response.status_code)
+
+
+class TestRoutePutSpentFrom(TestCase):
+    """Test PUT /transaction/{id}/spent_from/{spent_from_id}."""
+
+    async def test_valid_request(self) -> None:
+        """Testing a valid request's response."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            # insert some test transactions
+            user_id = await setup_user(database)
+            account_id = await setup_account(database, user_id)
+            envelope_id = await setup_envelope(database, user_id, account_id)
+
+            query = sql.SQL("""
+                INSERT INTO
+                    transaction(amount, payee, description, timestamp, account_id)
+                VALUES
+                    (1.23, 'a payee', 'a description', {timestamp}, {account_id})
+                RETURNING id;
+            """).format(
+                account_id=sql.Literal(account_id),
+                timestamp=sql.Literal("2019-12-10T08:12-05:00"),
+            )
+            await database.connect()
+            tran_id = (await database.execute_and_return(query))[0]["id"]
+            await database.disconnect()
+
+            response = await client.put(
+                f"{BASE_URL}/{tran_id}/spent_from/{envelope_id}",
+                headers={
+                    **get_token_header(user_id),
+                    "accept": "application/json"})
+
+            with self.subTest(
+                    msg="Responds with a status code of 200."):
+                self.assertEqual(200, response.status_code)
+
+            with self.subTest(
+                    msg="Responds with updated Transaction."
+            ):
+                body = response.json()
+
+                self.assertEqual(UUID(body["spent_from"]), envelope_id)
+
+    async def test_cant_update_transactions_if_not_own_account(self) -> None:
+        """Return 403 attempting to update transaction for other account."""
+        async with get_test_client() as clients:
+            client, database = clients
+
+            user_id = await setup_user(database, "user")
+            other_user = await setup_user(database, "other")
+            other_account = await setup_account(database, other_user)
+            envelope_id = await setup_envelope(database, user_id, other_account)
+
+            query = sql.SQL("""
+                INSERT INTO
+                    transaction(amount, payee, description, timestamp, account_id)
+                VALUES
+                    (1.23, 'a payee', 'a description', {timestamp}, {account_id})
+                RETURNING id;
+            """).format(
+                account_id=sql.Literal(other_account),
+                timestamp=sql.Literal("2019-12-10T08:12-05:00"),
+            )
+            await database.connect()
+            tran_id = (await database.execute_and_return(query))[0]["id"]
+            await database.disconnect()
+
+            response = await client.put(
+                f"{BASE_URL}/{tran_id}/spent_from/{envelope_id}",
                 headers={
                     **get_token_header(user_id),
                     "accept": "application/json"})
