@@ -170,3 +170,36 @@ async def setup_transactions(
     await database.connect()
     await database.execute(query)
     await database.disconnect()
+
+
+async def setup_envelope(
+    database: Client,
+    user_id: UUID,
+    account_id: UUID,
+    transaction_amounts: List[Decimal] = [Decimal(10)],
+    name: Optional[str] = "envelope",
+    funds: Optional[Decimal] = Decimal(0),
+) -> UUID:
+    """Create Envelope, optionally with given name & funds."""
+    await setup_transactions(database, transaction_amounts, account_id)
+
+    add_envelopes_query = sql.SQL("""
+        INSERT INTO envelope
+            (name, total_funds, user_id)
+        VALUES
+            ({name}, {funds}, {user_id})
+        RETURNING
+            id;
+    """).format(
+        name=sql.Literal(name),
+        funds=sql.Literal(funds),
+        user_id=sql.Literal(user_id))
+
+    await database.connect()
+    query_result = \
+        await database.execute_and_return(add_envelopes_query)
+    await database.disconnect()
+
+    result: UUID = query_result[0]["id"]
+
+    return result
