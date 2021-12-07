@@ -143,9 +143,7 @@ class EnvelopeUpdater(AsyncUpdate[EnvelopeOut]):
             envelope_id=sql.Literal(envelope_id),
             user_id=sql.Literal(user_id),
         )
-        print(f"query: {query}")
         query_result = await self._client.execute_and_return(query)
-        print(f"query_result: {query_result}")
 
         try:
             result = query_result[0]

@@ -352,8 +352,6 @@ class TestRoutePutId(TestCase):
                     "accept": "application/json"},
                 json=changes)
 
-            print(response.request.url)
-
             with self.subTest(
                     msg="Responds with a status code of 404."):
                 self.assertEqual(422, response.status_code)

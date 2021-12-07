@@ -67,7 +67,6 @@ def create_user(config: Config, database: Client) -> APIRouter:
                            user_id: UUID = Depends(auth_user)) -> UserOut:
         """Update the current user's password."""
         result = await model.update.password(user_id, new_password)
-        print("put_password result:", result)
 
         return result
 

@@ -9,7 +9,6 @@ from fastapi.routing import APIRouter
 
 from src.config import Config
 from src.database import Client
-from src.lib import FundsHolder, move_funds
 from src.models import (
     Balance,
     BalanceModel,
@@ -78,12 +77,7 @@ def create_envelope(config: Config, database: Client) -> APIRouter:
         changes: EnvelopeChanges,
         user_id: UUID = Depends(auth_user),
     ) -> EnvelopeOut:
-        print(f"changes: {changes}")
-        try:
-            return await model.update.changes(envelope_id, user_id, changes)
-        except Exception as exc:
-            print(f"exc caught: {exc}")
-            raise Exception from exc
+        return await model.update.changes(envelope_id, user_id, changes)
 
     default_other = Query(
         None,

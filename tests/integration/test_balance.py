@@ -248,8 +248,6 @@ class TestRouteGetEnvelope(TestCase):
                 msg="Balance is total funds - sum of Transactions spent."
             ):
                 body = response.json()
-                print(f"body: {body}")
-
                 self.assertEqual(body["amount"], 45)
 
 
@@ -298,7 +296,6 @@ class TestRouteGetAvailable(TestCase):
                 msg="Available balance is total - unspent amount in Envelopes."
             ):
                 body = response.json()
-                print(f"body: {body}")
 
                 self.assertEqual(body["amount"], 41)
 
