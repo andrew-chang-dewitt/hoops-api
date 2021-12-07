@@ -223,3 +223,72 @@ CSCI 23000 Skills Used
 - Web server construction
 - Data serialization (JSON)
 - Exception handling
+
+
+External libraries used
+---
+
+All top-level dependencies are defined in `./requirements/dev.txt` & `./requirements/prod.txt`. Anything in `dev.txt` isn't used to actually build & run the application & isn't called or referenced in the source code. 
+
+Some of these dependencies have their own sub-dependencies, but I don't necessarily interact with them directly in my source code. All dependencies, top-level & sub-dependencies are listed in the output from `pip freeze` below:
+
+```
+aiopg==1.3.3
+anyio==3.3.4
+asgi-lifespan==1.0.1
+asgiref==3.4.1
+astroid==2.8.5
+async-timeout==4.0.1
+autopep8==1.6.0
+certifi==2021.10.8
+cffi==1.15.0
+charset-normalizer==2.0.7
+click==8.0.3
+cryptography==35.0.0
+db-wrapper @ https://github.com/cheese-drawer/lib-python-db-wrapper/releases/download/2.3.0/db_wrapper-2.3.0-py3-none-any.whl
+ecdsa==0.17.0
+fastapi==0.70.0
+h11==0.12.0
+httpcore==0.13.7
+httptools==0.2.0
+httpx==0.20.0
+idna==3.3
+isort==5.10.1
+lazy-object-proxy==1.6.0
+mccabe==0.6.1
+migra==3.0.1621480950
+mypy==0.910
+mypy-extensions==0.4.3
+pathlib==1.0.1
+platformdirs==2.4.0
+psycopg2-binary==2.9.2
+pyasn1==0.4.8
+pycodestyle==2.8.0
+pycparser==2.21
+pydantic==1.8.2
+pydocstyle==6.1.1
+pylint==2.11.1
+python-dotenv==0.19.2
+python-jose==3.3.0
+python-multipart==0.0.5
+PyYAML==6.0
+requests==2.26.0
+rfc3986==1.5.0
+rsa==4.7.2
+schemainspect==3.0.1616029793
+six==1.16.0
+sniffio==1.2.0
+snowballstemmer==2.1.0
+SQLAlchemy==1.3.24
+sqlbag==0.1.1579049654
+starlette==0.16.0
+toml==0.10.2
+types-requests==2.25.12
+typing-extensions==3.10.0.2
+urllib3==1.26.7
+uvicorn==0.15.0
+uvloop==0.16.0
+watchgod==0.7
+websockets==10.0
+wrapt==1.13.3
+```
