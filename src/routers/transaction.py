@@ -164,4 +164,26 @@ def create_transaction(config: Config, database: Client) -> APIRouter:
 
         return await model.delete.one_by_id(str(transaction_id))
 
+    @transaction.put(
+        "/{transaction_id}/spent_from/{spent_from_id}",
+        response_model=TransactionOut,
+        summary="Mark Transaction as \"spent from\" the given Envelope")
+    async def put_spent_from(
+        transaction_id: UUID,
+        spent_from_id: UUID,
+        user_id: UUID = Depends(auth_user),
+    ) -> TransactionOut:
+        """Mark Transaction as Spent From given Envelope."""
+        tran = await model.read.one_by_id(transaction_id)
+        account = await account_model.read.one_by_id(tran.account_id)
+
+        try:
+            assert account.user_id == user_id
+        except AssertionError as exc:
+            raise UnauthorizedException from exc
+
+        return await model.update.changes(transaction_id,
+                                          TransactionChanges(
+                                              spent_from=spent_from_id))
+
     return transaction
