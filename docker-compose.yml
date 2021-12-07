@@ -1,4 +1,4 @@
-version: "3" # this is the Docker Compose specification
+version: "3.5" # this is the Docker Compose specification
                # version, not the app stack version
 
 services:
@@ -6,18 +6,17 @@ services:
   app:
     build: .
     ports:
-      - 5000:5000
+      - 4000:4000
     environment:
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: test
       DB_PASS: pass
       DB_NAME: dev
-      FLASK_APP: hoops
-      FLASK_ENV: DEVELOPMENT
-      FLASK_DEBUG: 1
+    secrets:
+      - app_key
     volumes:
-      - ./hoops:/hoops
+      - ./src:/src
 
   db:
     image: postgres:13-alpine
@@ -31,3 +30,7 @@ services:
                               # but docker secrets should be used in prod
                               # in conjunction with docker swarm in place
                               # of docker compose
+
+secrets:
+  app_key:
+    file: .secrets/app_key.txt
