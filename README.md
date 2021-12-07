@@ -5,6 +5,71 @@ Hoops - A simple budgeting application
 *Tuesday, Dec 7, 2021* \
 *Andrew Chang-DeWitt*
 
+Quick Start
+---
+
+A live version of this applications is running at [hoops.andrew-chang-dewitt.dev](https://hoops.andrew-chang-dewitt.dev) and can be interacted with like any API.
+
+### Authentication
+
+There's a login feature implemented using OAuth2 compliant form input to get a JWT that needs to be included in the `Authorization` header of every request made to a protected endpoint.
+
+#### Creating a User
+
+To be able to log in, you'll first need to create a User by making a `POST` request to `/user` with a body complying with the following schema:
+
+```
+{
+    handle: string
+    full_name: string
+    preferred_name: string (optional)
+    password: string
+}
+```
+
+An example using curl:
+
+```
+curl -X 'POST' \
+  'https://hoops.andrew-chang-dewitt.dev/user' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "handle": "test",
+  "full_name": "Test User",
+  "preferred_name": "Testy",
+  "password": "test"
+}'
+```
+
+
+#### Logging in
+
+You can get a token in one of two ways:
+
+1. Manually constructing a `POST` request to `hoops.andrew-chang-dewitt.dev/token` manually that includes a valid username & password. An example using curl:
+
+```
+curl -X 'POST' \
+  'https://hoops.andrew-chang-dewitt.dev/token' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=&username=test&password=test&scope=&client_id=&client_secret='
+```
+
+You'll then need to save the token value that's returned in the Response at the key `access_token` on the Response body.
+The body will look something like this:
+
+```
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhMWNiNjI5MS1kZDdmLTRkYTEtODFjYy04MzQ1ODlhZTAxZGUiLCJleHAiOjE2Mzg5MDQ4NDR9._8-EPf9k5Ry_akXGCIgBFI4c_n3qhRAWKBrsT1XQO0s",
+  "token_type": "bearer"
+}
+```
+
+2. Go to the live, interactive docs at [hoops.andrew-chang-dewitt.dev](https://hoops.andrew-chang-dewitt.dev) & use the "Authorize" button at the top right of the page to log in, then grab the token value the example created by making any authenticated query in the "Try it out" section of any protected endpoint.
+
+
 Project Summary
 ---
 
