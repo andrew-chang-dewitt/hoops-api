@@ -28,6 +28,109 @@ Modeled after my favorite now-defunct fintech's budgeting tools.
   1. Database (PostgreSQL&mdash;offers better types for currency via NUMERIC, UUID keys, & built-in password hashing tools)
   2. Web server (JSON REST API via FastAPI&mdash;offers better routing encapsulation via APIRouter & great type validation, API documentation, & is extensible via middleware functions)
 
+### Hardware limitations
+
+None that are of any concern for an app of this size & limited user-base.
+
+### Visual design implications
+
+There is no true visual design as this is just a RESTful API serving resources as JSON; however, the library used to create the server does automatically build out an interactive docs website.
+
+Data Design
+---
+
+### Overall data structure
+
+A PostgreSQL database containing the tables for the following data types.
+
+Three core data types:
+
+1. _**Transactions:**_ \
+  Exactly what their name says: an amount of money either going in from or coming out to a specific payee at a specific time.
+  
+2. _**Envelopes:**_ \
+  A concept that represents an amount of money reserved for a specific purpose (e.g. a savings goal like a vacation or an expense like rent or groceries).
+  
+3. _**Users:**_ \
+  Also exactly what the name says: a person using this budgeting program.
+  
+Besides those three core data types, the following ancillary data types exist:
+  
+- _**Accounts:**_ \
+  A bank account, credit card, cash hidden under the mattress, etc. 
+  Individual Transactions belong to an Account.
+
+The following Entity Relationship Diagram represents the database design:
+
+![Entity Relationship Diagram](/data-er.svg)
+
+
+### Implementation strategy
+
+Data models are defined in SQL files & loaded into the database on application initialization. The application then uses a custom wrapper (one I wrote before this class) on aio-pg (which is itself a wrapper on psycopg2) to connect to the PostgreSQL database. Queries are constructed in application code as Model objects that organize queries by the data return type. Finally, the application creates API endpoints that use the Model objects' query methods to perform CRUD operations on user requests.
+
+### Module structure
+
+src
+├── __init__.py
+├── app.py
+|     ^ *FastAPI application is defined here & router objects
+|       (defined in src/routers/...) are added to the application
+|       here as well*
+├── config.py
+|     ^ *simple configuration options are defined here*
+├── database.py
+|     ^ *database connection methods are defined here*
+├── models
+|   | ^ *data models, both SQL schemas & database queries (written
+|   |   in python) are defined here*
+│   ├── __init__.py
+│   ├── account.py
+│   ├── account.sql
+│   ├── amount.py
+│   ├── balance.py
+│   ├── base.py
+│   ├── envelope.py
+│   ├── envelope.sql
+│   ├── filters.py
+│   ├── token.py
+│   ├── transaction.py
+│   ├── transaction.sql
+│   ├── user.py
+│   ├── user.sql
+│   ├── z_relations.sql
+|   |     ^ *I use a tool to manage database migrations for me and
+|   |       it naively reads & executes sql files from src/models/ 
+|   |       in alphabetical order, foreign key constrains & views
+|   |       must be created after the tables they depend on, so 
+|   |       the `z_` prefix ensures they're executed last*
+│   └── z_view_balance.sql
+├── routers
+|   | ^ *endpoints are organized by the data type they're associated
+|   |   with & placed in a file named for that data type here*
+│   ├── __init__.py
+│   ├── account.py
+│   ├── balance.py
+│   ├── envelope.py
+│   ├── helpers
+│   │   └── filters.py
+│   ├── status.py
+│   ├── token.py
+│   ├── transaction.py
+│   └── user.py
+└── security.py
+      ^ *functions for creating & authenticating JWT are here*
+
+
+UI Design - API Reference
+---
+
+This app is the back-end REST API serving JSON only, with the User being a Client consuming the API over HTTPS.
+This means the UI is a series of API endpoints used to achieve the stories written above in the [Use Case Analysis](#use-case-analysis) section.
+
+See [hoops.andrew-chang-dewitt.dev/docs](https://hoops.andrew-chang-dewitt.dev) for an interactive & up to date version of the API endpoint & schema documentation.
+
+
 Use Case Analysis
 ---
 
@@ -35,6 +138,7 @@ I've written the following Use Case Analysis as "User stories":
 
 > *NOTE:* In this context, a User is defined as a Client consuming the JSON API. 
 > This means the UI of this application is the API itself.
+
 
 ### Implemented so far:
 
@@ -91,14 +195,6 @@ Eventually, I'd like the application to build the following stories as well:
     4. When a User moves money in and out of being reserved for the next occur date for an Expense, they are given the updated Expense & Balance of the Envelope or Balance the money is moved in or out of
     5. When a User moves money in and out of being reserved for the currently available funds on an Expense, they are given the updated Expense & Balance of the Envelope or Balance the money is moved in or out of
 
-
-UI Design - API Reference
----
-
-This app is the back-end REST API serving JSON only, with the User being a Client consuming the API over HTTPS.
-This means the UI is a series of API endpoints used to achieve the stories written above in the [Use Case Analysis](#use-case-analysis) section.
-
-See [hoops.andrew-chang-dewitt.dev/docs](https://hoops.andrew-chang-dewitt.dev) for an interactive & up to date version of the API endpoint & schema documentation.
 
 CSCI 23000 Skills Used
 ---
