@@ -89,8 +89,10 @@ src
 │   ├── account.py
 │   ├── account.sql
 │   ├── amount.py
+|   |     ^ *a shared data type used in multiple Models*
 │   ├── balance.py
 │   ├── base.py
+|   |     ^ *shared behavior for all Model objects here*
 │   ├── envelope.py
 │   ├── envelope.sql
 │   ├── filters.py
@@ -100,12 +102,12 @@ src
 │   ├── user.py
 │   ├── user.sql
 │   ├── z_relations.sql
-|   |     ^ *I use a tool to manage database migrations for me and
-|   |       it naively reads & executes sql files from src/models/ 
-|   |       in alphabetical order, foreign key constrains & views
-|   |       must be created after the tables they depend on, so 
-|   |       the `z_` prefix ensures they're executed last*
 │   └── z_view_balance.sql
+|         ^ *I use a tool to manage database migrations for me and
+|           it naively reads & executes sql files from src/models/ 
+|           in alphabetical order, foreign key constrains & views
+|           must be created after the tables they depend on, so 
+|           the `z_` prefix ensures they're executed last*
 ├── routers
 |   | ^ *endpoints are organized by the data type they're associated
 |   |   with & placed in a file named for that data type here*
@@ -114,6 +116,8 @@ src
 │   ├── balance.py
 │   ├── envelope.py
 │   ├── helpers
+|   |   | ^ *methods for assisting in creating shared behavior 
+|   |   |   between multiple routers here*
 │   │   └── filters.py
 │   ├── status.py
 │   ├── token.py
