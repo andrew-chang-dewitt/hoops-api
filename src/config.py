@@ -1,14 +1,19 @@
 """Application config."""
 
-import os
 from dataclasses import dataclass
+import os
+from typing import Optional
 
 from .database import create_conn_config, ConnectionParameters
 
 
-def _get_app_key_from_file() -> str:
-    with open("/run/secrets/app_key", "r") as key_file:
-        return str(key_file.readline())
+def _get_app_key_from_file() -> Optional[str]:
+    try:
+        with open("/run/secrets/app_key", "r") as key_file:
+            return str(key_file.readline())
+    except FileNotFoundError:
+        return None
+
 
 def get_app_key() -> str:
     """Get application key from environment."""

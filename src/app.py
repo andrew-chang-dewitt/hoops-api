@@ -24,7 +24,7 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
         config = create_default_config()
 
     database = create_client(config.database)
-    app = FastAPI()
+    app = FastAPI(root_path="/api")
 
     @app.on_event("startup")
     async def startup() -> None:
@@ -39,11 +39,14 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
         req: Request,
         call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
-        if req.method == "POST" and req.url.path[:6] != "/token":
-            if req.headers['content-type'] != 'application/json':
-                return JSONResponse(
-                    "Request Content-Type must be application/json.",
-                    http_status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+        if req.method == "POST":
+            last_six = req.url.path[len(req.url.path) - 6:]
+
+            if last_six != "/token":
+                if req.headers['content-type'] != 'application/json':
+                    return JSONResponse(
+                        "Request Content-Type must be application/json.",
+                        http_status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
         return await call_next(req)
 
