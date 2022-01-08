@@ -24,7 +24,10 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
         config = create_default_config()
 
     database = create_client(config.database)
-    app = FastAPI()
+    app = FastAPI(
+        title= "Hoops",
+        version="1.0.0b",
+        description="A simple budgeting application.")
 
     @app.on_event("startup")
     async def startup() -> None:
