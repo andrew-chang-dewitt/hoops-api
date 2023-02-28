@@ -37,6 +37,6 @@ if [[ $1 = "test" || $1 = "t" ]]; then
 else
     stack_up $dev_stack -d
     # Use uvicorn to run FastAPI application & watch for changes
-    APP_KEY='insecure_key' uvicorn src:app --reload --host=localhost --port=8000
+    APP_KEY='insecure_key' uvicorn src:app --reload --host=0.0.0.0 --port=8000
     stack_down $dev_stack
 fi
