@@ -1,10 +1,6 @@
 Hoops - A simple budgeting application
 ===
 
-*CSCI 23000* \
-*Tuesday, Dec 7, 2021* \
-*Andrew Chang-DeWitt*
-
 Quick Start
 ---
 
